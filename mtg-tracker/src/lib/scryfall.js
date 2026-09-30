@@ -56,3 +56,22 @@ export async function fetchCards(names) {
 
   return { found, notFound }
 }
+
+// [{ name, qty }] -> { cards: [{ name, qty, card }], notFound }
+// Names are corrected to Scryfall's spelling ("sol ring" -> "Sol Ring") so the same card always matches.
+export async function lookupEntries(entries) {
+  const { found, notFound } = await fetchCards(entries.map((e) => e.name))
+  const cards = entries.map((e) => {
+    const card = found[e.name.toLowerCase()] ?? null
+    return { name: card?.name ?? e.name, qty: e.qty, card }
+  })
+  return { cards, notFound }
+}
+
+// Card name suggestions while typing, e.g. "sol r" -> ["Sol Ring", "Sol Rider", ...]
+export async function autocomplete(query) {
+  if (query.length < 2) return []
+  const res = await fetch(`${API}/cards/autocomplete?q=${encodeURIComponent(query)}`)
+  if (!res.ok) return []
+  return (await res.json()).data
+}

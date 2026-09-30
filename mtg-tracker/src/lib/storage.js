@@ -1,16 +1,27 @@
-// Saves your decks in the browser (localStorage).
-// Step 1 keeps everything on this device; syncing between phone and PC comes later.
+// Saves everything in the browser (localStorage).
+// Shape: { decks: [{ id, name, addedAt, cards: [entry] }], loose: [entry] }
+// entry: { name, qty, card, status }  status is 'active' or 'out' (swapped out, still with the deck)
 
-const KEY = 'mtg-tracker:decks'
+const KEY = 'mtg-tracker:v2'
+const OLD_KEY = 'mtg-tracker:decks' // step 1 only stored decks
 
-export function loadDecks() {
+export function loadState() {
   try {
-    return JSON.parse(localStorage.getItem(KEY)) ?? []
+    const saved = JSON.parse(localStorage.getItem(KEY))
+    if (saved) return saved
+
+    // Upgrade data saved by the first version of the app.
+    const oldDecks = JSON.parse(localStorage.getItem(OLD_KEY)) ?? []
+    const decks = oldDecks.map((deck) => ({
+      ...deck,
+      cards: deck.cards.map((e) => ({ ...e, name: e.card?.name ?? e.name, status: 'active' })),
+    }))
+    return { decks, loose: [] }
   } catch {
-    return []
+    return { decks: [], loose: [] }
   }
 }
 
-export function saveDecks(decks) {
-  localStorage.setItem(KEY, JSON.stringify(decks))
+export function saveState(state) {
+  localStorage.setItem(KEY, JSON.stringify(state))
 }

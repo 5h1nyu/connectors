@@ -17,23 +17,47 @@ npm run dev      # starts the app
 
 Then open the link it prints (usually http://localhost:5173).
 
+## Use it online
+
+Once GitHub Pages is switched on (Settings → Pages → Deploy from a branch → `gh-pages`),
+the app lives at **https://5h1nyu.github.io/connectors/**. Every push to this branch
+rebuilds it automatically (see `.github/workflows/deploy-mtg-tracker.yml`).
+
+## How your cards are organised
+
+- **Decks**: each card is either *in the deck* or *swapped out* (crossed off, still in that deck box).
+- **Loose cards**: singles, binder, trade pile, anything not in a deck.
+- **Collection**: everything combined, with tags showing where each copy is.
+
+When you take a card out of a deck you choose: keep it crossed off with the deck, move it to loose,
+or remove it (sold/traded). You can name a replacement in the same step. Adding a card to a deck
+takes it from your loose cards if you have one there.
+
 ## How the code is organised
 
 | File | What it does |
 | --- | --- |
-| `src/App.jsx` | The main screen: deck list on the left, deck or "add deck" form on the right |
-| `src/components/AddDeckForm.jsx` | Paste a decklist, look the cards up on Scryfall, save the deck |
-| `src/components/DeckView.jsx` | Shows one deck grouped by card type |
-| `src/components/CardPreview.jsx` | The hover popup (tap on phones) with card image, text, price and buy link |
+| `src/App.jsx` | Tabs, and wires every button to a change in your data |
+| `src/lib/collection.js` | All the rules for moving cards between decks, loose cards and the bin |
+| `src/lib/storage.js` | Saves everything in this browser (and upgrades data from older versions) |
+| `src/lib/scryfall.js` | Card lookups, autocomplete, images and prices from Scryfall |
+| `src/lib/mtgjson.js` | Commander precon decklists from MTGJSON |
 | `src/lib/parseDecklist.js` | Understands pasted lists like `1x Sol Ring (C21) 263` |
-| `src/lib/scryfall.js` | Talks to the Scryfall API |
-| `src/lib/storage.js` | Saves your decks in this browser |
+| `src/components/DeckView.jsx` | One deck: add cards, take cards out, swapped-out section |
+| `src/components/RemoveCardDialog.jsx` | The "where does this card go?" popup |
+| `src/components/AddDeckForm.jsx` | Pick a precon or paste a list |
+| `src/components/AddCardForm.jsx` | Add one card (with autocomplete) or paste several |
+| `src/components/CollectionView.jsx` | Every card you own and where it is |
+| `src/components/BrewChecker.jsx` | What you have for a new deck and what to buy |
+| `src/components/Backup.jsx` | Download / restore your data as a file |
+| `src/components/CardPreview.jsx` | The hover popup (tap on phones) |
 
 ## Roadmap
 
 - [x] Step 1: add decks by pasting a list, hover any card to see it
-- [ ] Step 2: "Brew checker": paste a new list, see which cards you own (and which deck they're in) and what to buy
-- [ ] Step 3: pick a Commander precon from a list instead of pasting (via MTGJSON)
-- [ ] Step 4: put it online (GitHub Pages) so it works on your phone
-- [ ] Step 5: sync decks between phone and PC (e.g. Supabase)
-- [ ] Later: shop prices and links, binders/boxes, import from Archidekt/Moxfield
+- [x] Edit decks card by card, swapped-out cards, loose cards, full collection view
+- [x] Step 2: Brew checker with buy list
+- [x] Step 3: pick a Commander precon from a list (MTGJSON)
+- [x] Step 4: online with GitHub Pages
+- [ ] Step 5: sync between phone and PC (for now: Backup tab)
+- [ ] Later: "build this brew" (move cards out of other decks automatically), shop price comparison, binders as separate locations

@@ -1,25 +1,32 @@
 import { useState } from 'react'
 import { parseDecklist } from '../lib/parseDecklist'
-import { fetchCards } from '../lib/scryfall'
+import { lookupEntries } from '../lib/scryfall'
+import { fetchPrecon, fetchPreconList } from '../lib/mtgjson'
+import { newDeck } from '../lib/collection'
 
 export default function AddDeckForm({ onAdd }) {
+  const [mode, setMode] = useState('precon')
   const [name, setName] = useState('')
   const [list, setList] = useState('')
+  const [precons, setPrecons] = useState(null)
+  const [preconSearch, setPreconSearch] = useState('')
   const [status, setStatus] = useState(null) // { loading } | { error } | { notFound }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const entries = parseDecklist(list)
-    if (!name.trim() || entries.length === 0) {
-      setStatus({ error: 'Give the deck a name and paste at least one card.' })
-      return
-    }
-
-    setStatus({ loading: true })
+  async function loadPrecons() {
+    setStatus({ loading: 'Loading precon list…' })
     try {
-      const { found, notFound } = await fetchCards(entries.map((c) => c.name))
-      const cards = entries.map((c) => ({ ...c, card: found[c.name.toLowerCase()] ?? null }))
-      onAdd({ id: crypto.randomUUID(), name: name.trim(), addedAt: Date.now(), cards })
+      setPrecons(await fetchPreconList())
+      setStatus(null)
+    } catch (err) {
+      setStatus({ error: `Couldn't load the precon list (${err.message}). You can paste the list instead.` })
+    }
+  }
+
+  async function saveDeck(deckName, entries) {
+    setStatus({ loading: 'Looking up cards…' })
+    try {
+      const { cards, notFound } = await lookupEntries(entries)
+      onAdd(newDeck(deckName, cards))
       setName('')
       setList('')
       setStatus(notFound.length ? { notFound } : null)
@@ -28,27 +35,70 @@ export default function AddDeckForm({ onAdd }) {
     }
   }
 
+  async function pickPrecon(precon) {
+    setStatus({ loading: `Loading ${precon.name}…` })
+    try {
+      await saveDeck(precon.name, await fetchPrecon(precon.fileName))
+    } catch (err) {
+      setStatus({ error: `Couldn't load that precon: ${err.message}` })
+    }
+  }
+
+  function handlePaste(e) {
+    e.preventDefault()
+    const entries = parseDecklist(list)
+    if (!name.trim() || entries.length === 0) {
+      setStatus({ error: 'Give the deck a name and paste at least one card.' })
+      return
+    }
+    saveDeck(name.trim(), entries)
+  }
+
+  const shown = precons?.filter((p) => p.name.toLowerCase().includes(preconSearch.toLowerCase())).slice(0, 50)
+
   return (
-    <form className="add-deck" onSubmit={handleSubmit}>
+    <section className="panel add-deck">
       <h2>Add a deck</h2>
-      <input
-        placeholder="Deck name, e.g. Atraxa precon"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <textarea
-        rows={10}
-        placeholder={'Paste a decklist, one card per line:\n1 Sol Ring\n1 Command Tower\n...'}
-        value={list}
-        onChange={(e) => setList(e.target.value)}
-      />
-      <button disabled={status?.loading}>{status?.loading ? 'Looking up cards…' : 'Add deck'}</button>
+      <div className="tabs">
+        <button className={mode === 'precon' ? 'active' : ''} onClick={() => setMode('precon')}>Pick a precon</button>
+        <button className={mode === 'paste' ? 'active' : ''} onClick={() => setMode('paste')}>Paste a list</button>
+      </div>
+
+      {mode === 'precon' && !precons && (
+        <button onClick={loadPrecons} disabled={!!status?.loading}>Load Commander precons</button>
+      )}
+      {mode === 'precon' && precons && (
+        <>
+          <input placeholder="Search precons, e.g. Atraxa" value={preconSearch} onChange={(e) => setPreconSearch(e.target.value)} />
+          <ul className="precon-list">
+            {shown.map((p) => (
+              <li key={p.fileName}>
+                <button className="link" disabled={!!status?.loading} onClick={() => pickPrecon(p)}>{p.name}</button>
+                <span className="muted"> {p.code} · {p.releaseDate.slice(0, 4)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {mode === 'paste' && (
+        <form className="stack" onSubmit={handlePaste}>
+          <input placeholder="Deck name, e.g. Atraxa precon" value={name} onChange={(e) => setName(e.target.value)} />
+          <textarea
+            rows={10}
+            placeholder={'Paste a decklist, one card per line:\n1 Sol Ring\n1 Command Tower\n...'}
+            value={list}
+            onChange={(e) => setList(e.target.value)}
+          />
+          <button disabled={!!status?.loading}>Add deck</button>
+        </form>
+      )}
+
+      {status?.loading && <p className="muted">{status.loading}</p>}
       {status?.error && <p className="error">{status.error}</p>}
       {status?.notFound && (
-        <p className="error">
-          Saved, but Scryfall didn't recognise: {status.notFound.join(', ')}. Check the spelling.
-        </p>
+        <p className="error">Saved, but Scryfall didn't recognise: {status.notFound.join(', ')}. Check the spelling.</p>
       )}
-    </form>
+    </section>
   )
 }

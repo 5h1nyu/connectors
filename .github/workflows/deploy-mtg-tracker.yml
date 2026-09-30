@@ -1,0 +1,33 @@
+# Builds the MTG Deck Tracker and publishes it to the gh-pages branch,
+# which GitHub Pages serves at https://5h1nyu.github.io/connectors/
+name: Deploy MTG Deck Tracker
+
+on:
+  push:
+    branches: [claude/mtg-deck-card-tracker-68v5i3]
+    paths: ['mtg-tracker/**', '.github/workflows/deploy-mtg-tracker.yml']
+  workflow_dispatch: # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write # needed to push to the gh-pages branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mtg-tracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mtg-tracker/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: mtg-tracker/dist
