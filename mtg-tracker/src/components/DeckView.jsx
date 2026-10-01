@@ -11,7 +11,9 @@ import ConfirmRemoveDialog from './ConfirmRemoveDialog'
 import ViewToggle from './ViewToggle'
 import PageHeader from './PageHeader'
 import { useViewMode } from '../lib/useViewMode'
-import { availability, colorsOf, copyKey, deckSize, key } from '../lib/collection'
+import { availability, colorsOf, copyKey, coverOf, deckSize, key } from '../lib/collection'
+import PrintingPicker from './PrintingPicker'
+import VisibilityPicker from './VisibilityPicker'
 
 // Order card types the way most deck builders do.
 const TYPE_ORDER = ['Creature', 'Planeswalker', 'Instant', 'Sorcery', 'Artifact', 'Enchantment', 'Battle', 'Land']
@@ -24,14 +26,16 @@ function mainType(entry) {
 const sum = (entries) => entries.reduce((total, e) => total + e.qty, 0)
 const money = (n) => `$${n.toFixed(2)}`
 
-export default function DeckView({ deck, state, collection, looseCount, actions, onBack, onDelete }) {
+export default function DeckView({ deck, state, collection, looseCount, actions, canShare, onBack, onDelete }) {
   const [view, setView] = useViewMode('deck')
   const [moving, setMoving] = useState(null)
-  const [dialog, setDialog] = useState(null) // 'delete' | 'export' | 'build' | 'remove'
+  const [dialog, setDialog] = useState(null) // 'delete' | 'export' | 'build' | 'remove' | 'cover'
   const [selected, setSelected] = useState(() => new Set())
   const [copied, setCopied] = useState(false)
 
   const loc = (status) => ({ type: 'deck', deckId: deck.id, status })
+  const cover = coverOf(deck)
+  const coverEntry = cover && deck.cards.find((e) => e.status !== 'out' && e.card?.id === cover.id)
   const copyOf = (e) => ({ entry: e, loc: loc(e.status) })
   const playing = deck.cards.filter((e) => e.status !== 'out')
   const out = deck.cards.filter((e) => e.status === 'out')
@@ -66,11 +70,24 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
     <section className="deck-view">
       <PageHeader
         back={{ label: 'Decks', onClick: onBack }}
-        title={<>{deck.name} {deck.brew && <span className="brew-badge inline">Brewing</span>}</>}
+        title={
+          <span className="deck-title">
+            {cover && (
+              <button className="cover-thumb" onClick={() => setDialog('cover')} title="Change the cover card's printing">
+                <img src={cover.imageSmall ?? cover.image} alt={`Cover: ${cover.name}`} />
+                <span>Printing</span>
+              </button>
+            )}
+            <span>{deck.name} {deck.brew && <span className="brew-badge inline">Brewing</span>}</span>
+          </span>
+        }
         subtitle={
           <span className="deck-meta">
             <span className="pips">{colorsOf(deck).map((c) => <span key={c} className={`pip pip-${c}`} />)}</span>
             {deckSize(deck)} cards
+            <span className="deck-sharing" title={canShare ? 'Who can see this deck' : 'Log in (Settings) to share decks'}>
+              <VisibilityPicker compact value={deck.visibility} disabled={!canShare} onChange={(v) => actions.setDeckVisibility(deck.id, v)} />
+            </span>
           </span>
         }
         actions={
@@ -194,6 +211,17 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
 
       {dialog === 'delete' && <DeleteDeckDialog deck={deck} onCancel={() => setDialog(null)} onConfirm={onDelete} />}
       {dialog === 'export' && <ExportDialog deck={deck} onClose={() => setDialog(null)} />}
+      {dialog === 'cover' && coverEntry && (
+        <PrintingPicker
+          name={coverEntry.name}
+          currentId={coverEntry.card?.id}
+          onCancel={() => setDialog(null)}
+          onPick={(printing) => {
+            actions.changePrinting(coverEntry, loc(coverEntry.status), printing)
+            setDialog(null)
+          }}
+        />
+      )}
       {dialog === 'remove' && (
         <ConfirmRemoveDialog
           copies={picked.map((e) => ({ ...copyOf(e), label: e.status === 'out' ? `${deck.name} (swapped out)` : deck.name }))}

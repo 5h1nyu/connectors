@@ -11,7 +11,8 @@
 
 /* ---------- Themes ---------- */
 :root,
-[data-theme='midnight'] {
+[data-theme='midnight'],
+[data-theme='mana'] {
   --bg: #11131a;
   --surface: #181b24;
   --surface-2: #20242f;
@@ -208,30 +209,18 @@ label.row { flex-direction: row; align-items: center; color: var(--text); }
 .stack-card {
   position: absolute; inset: 0; display: block; border-radius: 4.75% / 3.5%;
   transform: translate3d(calc(var(--depth) * 3px), calc(var(--depth) * -3px), calc(var(--depth) * -6px));
-  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.25, 1.15);
 }
 .shuffle { position: absolute; inset: 0; display: block; border-radius: inherit; overflow: hidden; box-shadow: 0 3px 10px rgb(0 0 0 / 0.35); }
 .shuffle img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .card-back {
   position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit;
-  background: var(--surface-2); border: 1px solid var(--line-strong); transition: opacity 0.25s 0.3s;
+  background: var(--surface-2); border: 1px solid var(--line-strong); transition: opacity 0.3s 0.12s;
 }
 .card-back .ring-inscription { width: 92%; }
 .card-back .ring-text { fill: var(--accent); }
 
-/* Hover: the cards riffle (halves split left/right and back), turn face up, then fan out */
-.deck-stack:hover .shuffle { animation: riffle 0.55s ease-in-out; }
-.deck-stack:hover .card-back { opacity: 0; }
-.deck-stack:hover .stack-card {
-  transition-delay: 0.38s;
-  transform: translate3d(calc(var(--pos) * 22%), calc(var(--pos) * var(--pos) * 2.5%), calc(var(--pos) * 2px)) rotate(calc(var(--pos) * 8deg));
-}
-@keyframes riffle {
-  0% { transform: none; }
-  35% { transform: translateX(calc(var(--side) * 46%)) translateY(-5%) rotate(calc(var(--side) * 7deg)); }
-  65% { transform: translateX(calc(var(--side) * -6%)) translateY(-2%) rotate(calc(var(--side) * -2deg)); }
-  100% { transform: none; }
-}
+/* The shuffle itself is animated in src/lib/shuffle.js; here the backs fade as the cards turn face up */
+.stack3d.revealed .card-back { opacity: 0; transition-delay: 0s; }
 .new-stack { border-style: dashed; background: transparent; }
 .stack-card.empty { display: grid; place-items: center; background: var(--accent-soft); border: 1px dashed var(--accent); transform: none; }
 .new-stack:hover .stack-card.empty { transform: none; }
@@ -483,6 +472,10 @@ button.icon.close { position: absolute; top: 16px; right: 16px; font-size: 1.1re
 .theme-option.active { border-color: var(--accent); }
 .theme-option small { color: var(--muted); line-height: 1.35; }
 .theme-swatch { display: flex; gap: 6px; align-items: center; width: 100%; height: 56px; padding: 10px; border-radius: 10px; margin-bottom: 6px; border: 1px solid var(--line); }
+.theme-grid.mana { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.theme-grid.mana .theme-option { align-items: center; text-align: center; padding: 14px 8px; }
+.mana-swatch { display: flex; gap: 6px; height: 34px; align-items: center; }
+.pip.big { width: 26px; height: 26px; }
 .theme-swatch span { width: 36px; height: 36px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.25); }
 .file-label { color: var(--text); }
 
@@ -496,7 +489,11 @@ button.icon.close { position: absolute; top: 16px; right: 16px; font-size: 1.1re
 .notice.ok { background: color-mix(in srgb, var(--green) 12%, transparent); }
 .notice.info { background: var(--accent-soft); }
 .notice-icon { font-weight: 700; }
-.avatar { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--accent); color: var(--accent-ink); }
+.avatar {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; overflow: hidden;
+  font-weight: 700; background: var(--accent); color: var(--accent-ink); box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--line-strong);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
 .sync-state { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); }
 .sync-state.error { color: var(--red); }
 .sync-state button { margin-left: auto; }
@@ -534,3 +531,60 @@ button:active { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Two-colour themes use their second colour for the sigils and a few highlights */
+[data-theme='mana'] .deck-stack:hover { border-color: color-mix(in srgb, var(--accent-2) 45%, transparent); }
+[data-theme='mana'] .card-tile.selected img { outline-color: var(--accent-2); }
+[data-theme='mana'] .stack3d .ring-text { fill: var(--accent-2); }
+
+/* Deck page: the cover card next to the name (click to change its printing) */
+.deck-title { display: inline-flex; align-items: center; gap: 18px; }
+.cover-thumb {
+  position: relative; flex: none; width: 64px; padding: 0; border: none; background: none; border-radius: 4.75% / 3.5%;
+  transform: rotate(-4deg); transition: transform 0.25s cubic-bezier(.34,1.45,.64,1);
+}
+.cover-thumb img { width: 100%; display: block; border-radius: inherit; box-shadow: var(--shadow); }
+.cover-thumb span {
+  position: absolute; left: 50%; bottom: -8px; translate: -50% 0; font-size: 0.65rem; font-weight: 600; padding: 1px 7px;
+  border-radius: 999px; background: var(--accent); color: var(--accent-ink); opacity: 0; transition: opacity 0.2s;
+}
+.cover-thumb:hover { transform: rotate(0deg) scale(1.08); filter: none; }
+.cover-thumb:hover span { opacity: 1; }
+@media (max-width: 640px) { .cover-thumb { width: 48px; } .cover-thumb span { opacity: 1; } }
+
+/* ---------- Friends ---------- */
+.header-avatar { padding: 0; background: none; border: none; border-radius: 50%; }
+.sync-badge + .header-avatar { margin-left: 4px; }
+.app-header > .header-avatar:first-of-type { margin-left: auto; }
+.sync-badge ~ .header-avatar { margin-left: 8px; }
+.profile-card { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.profile-card h2 { margin: 0; font-size: 1.6rem; }
+.profile-info { flex: 1; min-width: 180px; }
+.profile-visibility { display: flex; flex-direction: column; gap: 6px; }
+.avatar-edit { position: relative; padding: 0; background: none; border: none; border-radius: 50%; }
+.avatar-edit .edit-label {
+  position: absolute; left: 50%; bottom: -6px; translate: -50% 0; font-size: 0.7rem; padding: 2px 8px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink); opacity: 0; transition: opacity 0.2s;
+}
+.avatar-edit:hover .edit-label, .avatar-edit:focus-visible .edit-label { opacity: 1; }
+@media (hover: none) { .avatar-edit .edit-label { opacity: 1; } }
+.friends-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: start; }
+.friends .big-search { width: 100%; margin-bottom: 8px; }
+.people { display: flex; flex-direction: column; }
+.person { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.person:first-child { border-top: none; }
+.person-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 0; background: none; border: none; color: var(--text); text-align: left; font-weight: 400; }
+.person-main:hover { filter: none; }
+.person-main:disabled { cursor: default; opacity: 1; }
+.person-names { display: flex; flex-direction: column; min-width: 0; }
+.person-names strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-title { display: inline-flex; align-items: center; gap: 16px; }
+.setup { max-width: 480px; }
+.empty-state { max-width: 560px; }
+
+.visibility { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.visibility button { background: transparent; color: var(--muted); border: none; padding: 5px 10px; border-radius: 7px; font-weight: 500; font-size: 0.85rem; }
+.visibility button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+.visibility button:disabled { cursor: not-allowed; }
+.visibility.compact button { padding: 3px 8px; }
+.deck-sharing { display: inline-flex; margin-left: 4px; }

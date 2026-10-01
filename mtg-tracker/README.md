@@ -92,6 +92,17 @@ account can read or change your row.
 5. Optional, after you've made your account: **Authentication → Sign In / Providers** → turn off
    **Allow new users to sign up**, so nobody else can make an account on your app.
 
+## Friends and sharing
+
+The **Friends** tab lets you pick a username and profile picture (any card's art, or a photo), find friends
+by username, and send/accept requests. Every deck has a **Private / Friends / Public** switch on its page,
+and your loose cards have one on the Friends tab. Public things show up on your profile link
+(`…/connectors/#/u/your-username`), which works for anyone, even without an account.
+
+**One-time setup:** in Supabase → **SQL Editor** → New query, paste `supabase/social.sql` and click **Run**.
+It creates the profiles and friendships tables, the sharing rules, and storage for profile photos. Sharing
+only shows what you've synced, so stay logged in.
+
 ## How the code is organised
 
 | File | What it does |
@@ -127,9 +138,17 @@ account can read or change your row.
 | `src/components/SelectionBar.jsx` | The bar for ticked cards (move / remove many at once) |
 | `src/components/Logo.jsx` | The ring logo with the Tengwar inscription |
 | `src/components/PageHeader.jsx` | The big title + subtitle + buttons at the top of every page |
-| `src/components/ThemePicker.jsx` | Settings → Look: Midnight, Ember or Chalk |
+| `src/components/ThemePicker.jsx` | Settings → Look: three vibes plus 15 Magic colour themes (mono + guilds) |
 | `src/components/NavIcon.jsx` | Icons for the navigation (bottom bar on phones) |
 | `src/lib/theme.js` | Remembers your colour theme on this device |
+| `src/lib/shuffle.js` | The riffle-shuffle-then-fan animation for deck stacks |
+| `src/lib/social.js` | Profiles, friend requests and shared vaults (Supabase) |
+| `src/lib/useProfile.js` | Loads and saves your own profile |
+| `src/components/FriendsView.jsx` | The Friends tab: profile, add friends, requests, friends list |
+| `src/components/VaultView.jsx` | Someone's shared decks and collection (friends or public link) |
+| `src/components/AvatarPicker.jsx` | Profile picture from card art or an uploaded photo |
+| `src/components/VisibilityPicker.jsx` | Private / Friends / Public switch |
+| `supabase/social.sql` | Database setup for friends and sharing (run once) |
 | `src/lib/useTilt.js` | Makes cards and deck stacks lean towards the mouse (3D) with a moving shine |
 | `src/components/RingInscription.jsx` | Circles of glowing Tengwar (logo, background, card backs) |
 | `src/components/Backdrop.jsx` | The slowly turning rings of writing behind every page |

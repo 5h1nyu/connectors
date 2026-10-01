@@ -1,5 +1,7 @@
 import { coverOf, colorsOf, deckSize } from '../lib/collection'
+import { useRef } from 'react'
 import { useTilt } from '../lib/useTilt'
+import { gather, shuffleAndFan } from '../lib/shuffle'
 import PageHeader from './PageHeader'
 import RingInscription from './RingInscription'
 
@@ -12,8 +14,9 @@ const CardBack = () => (
 
 // A deck as a 3D stack of cards. It leans towards the mouse; hover and the cards riffle-shuffle,
 // flip face up and fan out.
-function DeckStack({ deck, index, onOpen }) {
+export function DeckStack({ deck, index, onOpen }) {
   const { ref: tiltRef, onPointerMove, onPointerLeave } = useTilt(12)
+  const stackRef = useRef(null)
   const cover = coverOf(deck)
   const others = deck.cards
     .filter((e) => e.status !== 'out' && e.card?.imageSmall && e.card.id !== cover?.id && !/Basic Land/.test(e.card.typeLine))
@@ -26,18 +29,24 @@ function DeckStack({ deck, index, onOpen }) {
     <button
       ref={tiltRef}
       onPointerMove={onPointerMove}
-      onPointerLeave={onPointerLeave}
+      onPointerEnter={(e) => e.pointerType === 'mouse' && shuffleAndFan(stackRef.current)}
+      onPointerLeave={(e) => {
+        onPointerLeave(e)
+        gather(stackRef.current)
+      }}
       className={`deck-stack ${deck.brew ? 'is-brew' : ''}`}
       style={{ '--n': index }}
       onClick={onOpen}
     >
-      <span className="stack3d">
+      <span className="stack3d" ref={stackRef}>
         {cards.length === 0 && <span className="stack-card" style={{ '--pos': 0, '--depth': 0 }}><CardBack /></span>}
         {cards.map((card, i) => (
           <span
             key={card.id + i}
             className="stack-card"
-            style={{ '--pos': i - (cards.length - 1) / 2, '--depth': cards.length - 1 - i, '--side': i % 2 ? 1 : -1 }}
+            data-pos={i - (cards.length - 1) / 2}
+            data-depth={cards.length - 1 - i}
+            style={{ '--depth': cards.length - 1 - i }}
           >
             <span className="shuffle">
               <img src={card.imageSmall ?? card.image} alt="" loading="lazy" />

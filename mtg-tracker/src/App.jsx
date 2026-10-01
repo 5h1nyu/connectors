@@ -15,6 +15,12 @@ import ThemePicker from './components/ThemePicker'
 import NavIcon from './components/NavIcon'
 import PageHeader from './components/PageHeader'
 import { useTheme } from './lib/theme'
+import FriendsView from './components/FriendsView'
+import VaultView from './components/VaultView'
+import Avatar from './components/Avatar'
+import { useProfile } from './lib/useProfile'
+import { getProfileByUsername } from './lib/social'
+import { supabase } from './lib/supabase'
 import { CardPreviewProvider } from './components/CardPreview'
 import { loadState, saveState } from './lib/storage'
 import { lookupEntries } from './lib/scryfall'
@@ -24,8 +30,15 @@ import * as col from './lib/collection'
 const TABS = [
   ['decks', 'Decks'],
   ['collection', 'Collection'],
+  ['friends', 'Friends'],
   ['settings', 'Settings'],
 ]
+
+// "#/u/shinyu" in the address bar means "show shinyu's public profile".
+function readProfileHash() {
+  const match = window.location.hash.match(/^#\/u\/([^/?#]+)/)
+  return match ? decodeURIComponent(match[1]) : null
+}
 
 export default function App() {
   const [state, setState] = useState(loadState)
@@ -36,6 +49,26 @@ export default function App() {
   const [toast, setToast] = useState(null) // { message, undo }
   const sync = useCloudSync(state, setState)
   const [theme, setTheme] = useTheme()
+  const profileState = useProfile(sync.user)
+  const [publicName, setPublicName] = useState(readProfileHash) // viewing someone's link: #/u/username
+  const [publicProfile, setPublicProfile] = useState(null)
+
+  useEffect(() => {
+    const onHash = () => setPublicName(readProfileHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  useEffect(() => {
+    if (!publicName || !supabase) return
+    getProfileByUsername(publicName)
+      .then((p) => setPublicProfile(p ?? { missing: true }))
+      .catch(() => setPublicProfile({ missing: true }))
+  }, [publicName])
+  const leavePublic = () => {
+    history.replaceState(null, '', window.location.pathname)
+    setPublicName(null)
+    setPublicProfile(null)
+  }
 
   // Save to the browser whenever anything changes.
   useEffect(() => saveState(state), [state])
@@ -72,6 +105,8 @@ export default function App() {
     },
     addToDeck: (deck, cards, { takeFromLoose, wanted } = {}) =>
       setState((s) => (deck.brew || wanted ? col.addWanted(s, deck.id, cards) : col.addToDeck(s, deck.id, cards, takeFromLoose))),
+    setDeckVisibility: (deckId, visibility) =>
+      setState((s) => ({ ...s, decks: s.decks.map((d) => (d.id === deckId ? { ...d, visibility } : d)) })),
     markBought: (deckId, entries) => setState((s) => col.markBought(s, deckId, entries)),
     finishBuild: (deckId, opts) => {
       const undo = snapshotUndo()
@@ -104,7 +139,7 @@ export default function App() {
         <Logo />
         <nav className="main-nav">
           {TABS.map(([id, label]) => (
-            <button key={id} className={tab === id ? 'active' : ''} onClick={() => { setTab(id); if (id === 'decks') setDeckScreen('shelf') }}>
+            <button key={id} className={tab === id ? 'active' : ''} onClick={() => { if (publicName) leavePublic(); setTab(id); if (id === 'decks') setDeckScreen('shelf') }}>
               <NavIcon name={id} />
               <span>{label}</span>
             </button>
@@ -115,8 +150,22 @@ export default function App() {
             {sync.status === 'synced' ? '✓ Synced' : sync.status === 'saving' ? 'Saving…' : '⚠ Not synced'}
           </span>
         )}
+        {profileState.profile && (
+          <button className="header-avatar" onClick={() => { if (publicName) leavePublic(); setTab('friends') }} title="Your profile">
+            <Avatar profile={profileState.profile} size={34} />
+          </button>
+        )}
       </header>
 
+      {publicName ? (
+        <main key="public" className="page">
+          {!publicProfile && <p className="muted"><span className="spinner" /> Finding @{publicName}…</p>}
+          {publicProfile?.missing && <p className="muted">There's no one called @{publicName} here.</p>}
+          {publicProfile && !publicProfile.missing && (
+            <VaultView profile={publicProfile} onBack={leavePublic} backLabel="Back to my vault" />
+          )}
+        </main>
+      ) : (
       <main key={tab === 'decks' ? `decks-${deckScreen}` : tab} className="page">
         {tab === 'decks' && !selected && deckScreen !== 'import' && (
           <DeckShelf decks={state.decks} onOpen={setDeckScreen} onNew={() => setCreating(true)} onImport={() => setDeckScreen('import')} />
@@ -151,6 +200,7 @@ export default function App() {
             collection={collection}
             looseCount={looseCount}
             actions={actions}
+            canShare={!!sync.user}
             onBack={() => setDeckScreen('shelf')}
             onDelete={(keepCards) => {
               const undo = snapshotUndo()
@@ -177,6 +227,14 @@ export default function App() {
             onOpenDeck={openDeck}
           />
         )}
+        {tab === 'friends' && (
+          <FriendsView
+            user={sync.user}
+            profileState={profileState}
+            onGoToSettings={() => setTab('settings')}
+            notify={(message) => setToast({ message })}
+          />
+        )}
         {tab === 'settings' && (
           <div className="stack settings">
             <PageHeader title="Settings" subtitle="Sync, looks and your data." />
@@ -187,6 +245,7 @@ export default function App() {
           </div>
         )}
       </main>
+      )}
 
       {detailCard && (
         <CardDetail
