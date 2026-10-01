@@ -190,40 +190,55 @@ textarea { width: 100%; font-family: ui-monospace, 'SF Mono', Menlo, monospace; 
 label { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; color: var(--muted); }
 label.row { flex-direction: row; align-items: center; color: var(--text); }
 
-/* ---------- Decks page: art tiles ---------- */
-.deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-@media (max-width: 640px) { .deck-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 14px; } }
-.deck-tile {
-  display: flex; flex-direction: column; padding: 0; text-align: left; overflow: visible;
-  background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 16px; font-weight: 400;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+/* ---------- Decks page: 3D stacks that shuffle and fan out ---------- */
+.deck-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 28px 20px; }
+@media (max-width: 640px) { .deck-shelf { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 12px; } }
+.deck-stack {
+  --rx: 0deg; --ry: 0deg;
+  display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 12px 18px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 20px; font-weight: 400;
+  perspective: 900px; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.deck-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--line-strong); filter: none; }
-.deck-art { position: relative; aspect-ratio: 16 / 10; border-radius: 15px 15px 0 0; overflow: hidden; background: var(--surface-2); }
-.deck-art > img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
-.deck-art > img.from-card { object-position: 50% 18%; transform: scale(1.35); }
-.deck-tile:hover .deck-art > img { transform: scale(1.04); }
-.deck-tile:hover .deck-art > img.from-card { transform: scale(1.4); }
-.deck-art-empty { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 0.9rem; }
-.deck-info { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px 16px; }
-.deck-name { font-size: 1.15rem; font-weight: 650; letter-spacing: -0.01em; }
-.deck-meta { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; font-weight: 400; }
-.new-tile { border-style: dashed; background: transparent; }
-.new-tile .deck-art { display: grid; place-items: center; background: var(--accent-soft); }
-.plus { font-size: 2.5rem; font-weight: 300; color: var(--accent); }
+.deck-stack:hover { border-color: var(--line-strong); box-shadow: var(--shadow); filter: none; }
+.stack3d {
+  position: relative; width: 132px; aspect-ratio: 488 / 680; transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform 0.25s ease-out;
+}
+@media (max-width: 640px) { .stack3d { width: 108px; } }
+.stack-card {
+  position: absolute; inset: 0; display: block; border-radius: 4.75% / 3.5%;
+  transform: translate3d(calc(var(--depth) * 3px), calc(var(--depth) * -3px), calc(var(--depth) * -6px));
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.25, 1.15);
+}
+.shuffle { position: absolute; inset: 0; display: block; border-radius: inherit; overflow: hidden; box-shadow: 0 3px 10px rgb(0 0 0 / 0.35); }
+.shuffle img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-back {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit;
+  background: var(--surface-2); border: 1px solid var(--line-strong); transition: opacity 0.25s 0.3s;
+}
+.card-back .ring-inscription { width: 92%; }
+.card-back .ring-text { fill: var(--accent); }
 
-/* Hover a deck: three of its cards fan up out of the art */
-.peek { position: absolute; left: 0; right: 0; bottom: -10%; height: 80%; pointer-events: none; }
-.peek img {
-  position: absolute; left: 50%; bottom: 0; width: 34%; border-radius: 6px; box-shadow: 0 6px 16px rgb(0 0 0 / 0.45);
-  transform: translateX(-50%) translateY(70%) rotate(0deg); opacity: 0;
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.15), opacity 0.25s;
+/* Hover: the cards riffle (halves split left/right and back), turn face up, then fan out */
+.deck-stack:hover .shuffle { animation: riffle 0.55s ease-in-out; }
+.deck-stack:hover .card-back { opacity: 0; }
+.deck-stack:hover .stack-card {
+  transition-delay: 0.38s;
+  transform: translate3d(calc(var(--pos) * 22%), calc(var(--pos) * var(--pos) * 2.5%), calc(var(--pos) * 2px)) rotate(calc(var(--pos) * 8deg));
 }
-.deck-tile:hover .peek img {
-  opacity: 1;
-  transform: translateX(calc(-50% + var(--i) * 62%)) translateY(calc(var(--i) * var(--i) * 8%)) rotate(calc(var(--i) * 10deg));
+@keyframes riffle {
+  0% { transform: none; }
+  35% { transform: translateX(calc(var(--side) * 46%)) translateY(-5%) rotate(calc(var(--side) * 7deg)); }
+  65% { transform: translateX(calc(var(--side) * -6%)) translateY(-2%) rotate(calc(var(--side) * -2deg)); }
+  100% { transform: none; }
 }
-@media (hover: none) { .peek { display: none; } }
+.new-stack { border-style: dashed; background: transparent; }
+.stack-card.empty { display: grid; place-items: center; background: var(--accent-soft); border: 1px dashed var(--accent); transform: none; }
+.new-stack:hover .stack-card.empty { transform: none; }
+.plus { font-size: 2.5rem; font-weight: 300; color: var(--accent); }
+.deck-info { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.deck-name { font-size: 1.1rem; font-weight: 650; letter-spacing: -0.01em; }
+.deck-meta { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; font-weight: 400; flex-wrap: wrap; justify-content: center; }
 
 .pips { display: inline-flex; gap: 3px; }
 .pip { width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25); display: inline-block; }
@@ -231,7 +246,7 @@ label.row { flex-direction: row; align-items: center; color: var(--text); }
 .pip-R { background: #df5a44; } .pip-G { background: #3f9a60; }
 
 .brew-badge {
-  position: absolute; top: 10px; left: 10px; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  position: absolute; top: -12px; left: 50%; translate: -50% 0; z-index: 5; white-space: nowrap; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;
   background: color-mix(in srgb, var(--bg) 80%, transparent); color: var(--gold); backdrop-filter: blur(6px);
 }
 .brew-badge.inline { position: static; vertical-align: middle; font-size: 0.8rem; margin-left: 8px; background: var(--accent-soft); color: var(--accent); }
@@ -263,9 +278,20 @@ li.selected { background: var(--accent-soft); border-radius: 6px; }
 /* ---------- Card pictures ---------- */
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px 12px; }
 @media (max-width: 640px) { .card-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px 8px; } }
-.card-tile { position: relative; border-radius: 4.75% / 3.5%; transition: transform 0.15s; }
-.card-tile:hover { transform: translateY(-4px); z-index: 2; }
-.card-face { display: block; width: 100%; padding: 0; border: none; background: none; border-radius: inherit; }
+.card-tile { --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 50%; position: relative; border-radius: 4.75% / 3.5%; perspective: 700px; }
+.card-tile:hover { z-index: 2; }
+.card-face {
+  position: relative; display: block; width: 100%; padding: 0; border: none; background: none; border-radius: inherit;
+  transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform 0.2s ease-out;
+}
+.card-tile:hover .card-face { transform: translateY(-4px) rotateX(var(--rx)) rotateY(var(--ry)) scale(1.03); }
+/* the foil shine that follows the mouse */
+.glare {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  background: radial-gradient(circle at var(--gx) var(--gy), rgb(255 255 255 / 0.35), rgb(255 255 255 / 0) 55%);
+  mix-blend-mode: overlay;
+}
+.card-tile:hover .glare, .flip-card:hover .glare { opacity: 1; }
 .card-face:hover { filter: none; }
 .card-face img { width: 100%; aspect-ratio: 488 / 680; object-fit: cover; display: block; border-radius: 4.75% / 3.5%; box-shadow: 0 2px 8px rgb(0 0 0 / 0.25); }
 .card-tile:hover .card-face img { box-shadow: var(--shadow); }
@@ -406,7 +432,16 @@ button.icon.close { position: absolute; top: 16px; right: 16px; font-size: 1.1re
 .card-detail { width: min(880px, 100%); display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: 28px; align-items: start; }
 @media (max-width: 640px) { .card-detail { grid-template-columns: 1fr; } .card-detail-image { max-width: 230px; margin: 0 auto; } }
 .card-detail-image { display: flex; flex-direction: column; gap: 10px; }
-.card-detail-image img { width: 100%; border-radius: 4.75% / 3.5%; box-shadow: var(--shadow); }
+.flip-card { --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 50%; perspective: 1200px; }
+.flip-inner {
+  position: relative; display: grid; transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform 0.6s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.flip-card.flipped .flip-inner { transform: rotateX(var(--rx)) rotateY(calc(180deg + var(--ry))); }
+.flip-card:hover .flip-inner { transition-duration: 0.25s, 0.6s; }
+.flip-face { grid-area: 1 / 1; position: relative; backface-visibility: hidden; border-radius: 4.75% / 3.5%; }
+.flip-face.back { transform: rotateY(180deg); }
+.flip-face img { width: 100%; display: block; border-radius: 4.75% / 3.5%; box-shadow: var(--shadow); }
 .card-detail-info h2 { font-size: 1.6rem; margin-right: 32px; }
 .mana { color: var(--muted); font-weight: 400; font-size: 1rem; }
 .card-detail-info .type { font-weight: 600; margin: 6px 0; }
@@ -480,3 +515,22 @@ button.icon.close { position: absolute; top: 16px; right: 16px; font-size: 1.1re
   border-right-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Motion: things rise in, buttons press ---------- */
+.page { animation: page-in 0.35s ease-out both; }
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } }
+.deck-shelf > *, .card-grid > *, .card-grid .card-tile { animation: rise-in 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both; animation-delay: calc(min(var(--n, 0), 24) * 35ms); }
+@keyframes rise-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+button:active { transform: scale(0.97); }
+.deck-stack:active, .card-face:active { transform: none; }
+.card-tile.selected .card-face { transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(0.96); }
+.selection-bar { animation: bar-in 0.25s ease-out; }
+@keyframes bar-in { from { opacity: 0; transform: translateY(-8px); } }
+.dialog { animation: dialog-in 0.25s cubic-bezier(0.2, 0.8, 0.3, 1.1); }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+.toast { animation: toast-in 0.3s ease-out; }
+@keyframes toast-in { from { opacity: 0; translate: 0 12px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+}

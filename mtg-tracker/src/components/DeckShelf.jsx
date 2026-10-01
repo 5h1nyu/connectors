@@ -1,38 +1,59 @@
 import { coverOf, colorsOf, deckSize } from '../lib/collection'
+import { useTilt } from '../lib/useTilt'
 import PageHeader from './PageHeader'
+import RingInscription from './RingInscription'
 
-// A deck as a big art tile (like Moxfield). Hover it and a few of its cards fan up.
-function DeckTile({ deck, onOpen }) {
+// The back of a card: the theme colour with the ring inscription.
+const CardBack = () => (
+  <span className="card-back">
+    <RingInscription size={100} rings={[{ r: 30, fontSize: 6.5 }]} />
+  </span>
+)
+
+// A deck as a 3D stack of cards. It leans towards the mouse; hover and the cards riffle-shuffle,
+// flip face up and fan out.
+function DeckStack({ deck, index, onOpen }) {
+  const { ref: tiltRef, onPointerMove, onPointerLeave } = useTilt(12)
   const cover = coverOf(deck)
-  const peek = deck.cards
+  const others = deck.cards
     .filter((e) => e.status !== 'out' && e.card?.imageSmall && e.card.id !== cover?.id && !/Basic Land/.test(e.card.typeLine))
-    .slice(0, 3)
+    .slice(0, 4)
     .map((e) => e.card)
-  const cards = deck.cards.filter((e) => e.status !== 'out')
-  const value = cards.reduce((n, e) => n + e.qty * Number(e.card?.priceUsd ?? 0), 0)
+  const cards = [...others, cover].filter(Boolean) // cover ends up on top
+  const value = deck.cards.filter((e) => e.status !== 'out').reduce((n, e) => n + e.qty * Number(e.card?.priceUsd ?? 0), 0)
 
   return (
-    <button className="deck-tile" onClick={onOpen}>
-      <div className="deck-art">
-        {cover ? (
-          <img src={cover.artCrop ?? cover.image} alt="" loading="lazy" className={cover.artCrop ? '' : 'from-card'} />
-        ) : (
-          <div className="deck-art-empty">No cards yet</div>
-        )}
+    <button
+      ref={tiltRef}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`deck-stack ${deck.brew ? 'is-brew' : ''}`}
+      style={{ '--n': index }}
+      onClick={onOpen}
+    >
+      <span className="stack3d">
+        {cards.length === 0 && <span className="stack-card" style={{ '--pos': 0, '--depth': 0 }}><CardBack /></span>}
+        {cards.map((card, i) => (
+          <span
+            key={card.id + i}
+            className="stack-card"
+            style={{ '--pos': i - (cards.length - 1) / 2, '--depth': cards.length - 1 - i, '--side': i % 2 ? 1 : -1 }}
+          >
+            <span className="shuffle">
+              <img src={card.imageSmall ?? card.image} alt="" loading="lazy" />
+              {i < cards.length - 1 && <CardBack />}
+            </span>
+          </span>
+        ))}
         {deck.brew && <span className="brew-badge">Brewing</span>}
-        <div className="peek" aria-hidden="true">
-          {peek.map((card, i) => (
-            <img key={card.id} src={card.imageSmall} alt="" loading="lazy" style={{ '--i': i - (peek.length - 1) / 2 }} />
-          ))}
-        </div>
-      </div>
-      <div className="deck-info">
+      </span>
+      <span className="deck-info">
         <strong className="deck-name">{deck.name}</strong>
         <span className="deck-meta">
           <span className="pips">{colorsOf(deck).map((c) => <span key={c} className={`pip pip-${c}`} />)}</span>
           {deckSize(deck)} cards{value > 0 && ` · $${value.toFixed(0)}`}
         </span>
-      </div>
+      </span>
     </button>
   )
 }
@@ -51,14 +72,14 @@ export default function DeckShelf({ decks, onOpen, onNew, onImport }) {
           </>
         }
       />
-      <section className="deck-grid">
-        {decks.map((deck) => <DeckTile key={deck.id} deck={deck} onOpen={() => onOpen(deck.id)} />)}
-        <button className="deck-tile new-tile" onClick={onNew}>
-          <div className="deck-art"><span className="plus">+</span></div>
-          <div className="deck-info">
+      <section className="deck-shelf">
+        {decks.map((deck, i) => <DeckStack key={deck.id} deck={deck} index={i} onOpen={() => onOpen(deck.id)} />)}
+        <button className="deck-stack new-stack" onClick={onNew} style={{ '--n': decks.length }}>
+          <span className="stack3d"><span className="stack-card empty"><span className="plus">+</span></span></span>
+          <span className="deck-info">
             <strong className="deck-name">New deck</strong>
             <span className="deck-meta">Start from scratch</span>
-          </div>
+          </span>
         </button>
       </section>
     </>

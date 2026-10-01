@@ -117,7 +117,7 @@ export default function App() {
         )}
       </header>
 
-      <main>
+      <main key={tab === 'decks' ? `decks-${deckScreen}` : tab} className="page">
         {tab === 'decks' && !selected && deckScreen !== 'import' && (
           <DeckShelf decks={state.decks} onOpen={setDeckScreen} onNew={() => setCreating(true)} onImport={() => setDeckScreen('import')} />
         )}

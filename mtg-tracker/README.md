@@ -119,7 +119,7 @@ account can read or change your row.
 | `src/components/CardDetail.jsx` | The card page: details, prices, your copies and what to do with them |
 | `src/components/MoveDialog.jsx` | Move copies between decks, loose, or out of your collection |
 | `src/components/PrintingPicker.jsx` | Grid of every printing to choose from |
-| `src/components/DeckShelf.jsx` | Your decks as card stacks that fan out on hover |
+| `src/components/DeckShelf.jsx` | Decks as 3D card stacks: they tilt, riffle-shuffle and fan out on hover |
 | `src/components/CardImage.jsx` | A clickable card picture used in the picture views |
 | `src/components/ExportDialog.jsx` | Export a deck for Tabletop Simulator or Moxfield/Archidekt |
 | `src/components/NewDeckDialog.jsx` | "Build a new deck": name + optional commander |
@@ -130,6 +130,7 @@ account can read or change your row.
 | `src/components/ThemePicker.jsx` | Settings → Look: Midnight, Ember or Chalk |
 | `src/components/NavIcon.jsx` | Icons for the navigation (bottom bar on phones) |
 | `src/lib/theme.js` | Remembers your colour theme on this device |
+| `src/lib/useTilt.js` | Makes cards and deck stacks lean towards the mouse (3D) with a moving shine |
 | `src/components/RingInscription.jsx` | Circles of glowing Tengwar (logo, background, card backs) |
 | `src/components/Backdrop.jsx` | The slowly turning rings of writing behind every page |
 | `src/components/ConfirmRemoveDialog.jsx` | "Are you sure?" showing exactly which cards will be removed |

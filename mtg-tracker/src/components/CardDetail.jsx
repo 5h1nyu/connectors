@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import MoveDialog from './MoveDialog'
 import PrintingPicker from './PrintingPicker'
+import { useTilt } from '../lib/useTilt'
 
 const COLOR_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' }
 
@@ -10,7 +11,7 @@ export default function CardDetail({ card, item, wantedIn = [], decks, actions, 
   const [moving, setMoving] = useState(null) // a copy from item.copies
   const [reprinting, setReprinting] = useState(null)
 
-  const image = flipped && card.backImage ? card.backImage : card.image
+  const { ref: tiltRef, onPointerMove, onPointerLeave } = useTilt(8)
 
   return (
     <div className="dialog-backdrop" onClick={onClose}>
@@ -18,7 +19,25 @@ export default function CardDetail({ card, item, wantedIn = [], decks, actions, 
         <button className="icon close" onClick={onClose} aria-label="Close">✕</button>
 
         <div className="card-detail-image">
-          {image ? <img src={image} alt={card.name} /> : <div className="no-image big">{card.name}</div>}
+          <div
+            ref={tiltRef}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeave}
+            className={`flip-card ${flipped ? 'flipped' : ''}`}
+          >
+            <div className="flip-inner">
+              <div className="flip-face front">
+                {card.image ? <img src={card.image} alt={card.name} /> : <div className="no-image big">{card.name}</div>}
+                <span className="glare" aria-hidden="true" />
+              </div>
+              {card.backImage && (
+                <div className="flip-face back">
+                  <img src={card.backImage} alt={`${card.name} (back face)`} />
+                  <span className="glare" aria-hidden="true" />
+                </div>
+              )}
+            </div>
+          </div>
           {card.backImage && (
             <button className="secondary" onClick={() => setFlipped(!flipped)}>↻ Flip card</button>
           )}

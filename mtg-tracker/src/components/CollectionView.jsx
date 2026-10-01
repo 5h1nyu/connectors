@@ -77,8 +77,8 @@ export default function CollectionView({ collection, decks, onAddLoose, onMoveMa
 
       {view === 'visual' ? (
         <div className="card-grid binder">
-          {shown.map((item) => (
-            <div key={item.name} className="binder-slot">
+          {shown.map((item, i) => (
+            <div key={item.name} className="binder-slot" style={{ '--n': i }}>
               <CardImage card={item.card} name={item.name} qty={item.total} small
                 selected={itemSelected(item)} onToggle={() => setMany(itemKeys(item), !itemSelected(item))} />
               <Places places={item.places} onOpenDeck={onOpenDeck} compact />
