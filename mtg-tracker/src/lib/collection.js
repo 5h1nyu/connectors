@@ -257,3 +257,19 @@ export function exportDeck(deck, withPrintings) {
 // A stable id for one group of copies (same card, printing, status and place).
 export const copyKey = ({ entry, loc }) =>
   `${loc.type}|${loc.deckId ?? ''}|${entry.status}|${key(entry.name)}|${printingOf(entry) ?? ''}`
+
+// One more or one fewer copy of an entry, in the same place and printing (0 removes it).
+export function adjustQty(state, entry, loc, delta) {
+  if (delta > 0) return updateAt(state, loc, (list) => addEntry(list, { ...entry, qty: delta }, entry.status))
+  return updateAt(state, loc, (list) => removeEntry(list, entry, -delta))
+}
+
+// Which card is on the front of the deck, and (optionally) which is its commander.
+export function setFront(state, deckId, name, { commander } = {}) {
+  return {
+    ...state,
+    decks: state.decks.map((d) =>
+      d.id === deckId ? { ...d, cover: name, ...(commander === undefined ? {} : { commander: commander ? name : null }) } : d,
+    ),
+  }
+}

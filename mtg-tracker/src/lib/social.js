@@ -19,22 +19,26 @@ export async function getProfile(id) {
   return check(await supabase.from('profiles').select('*').eq('id', id).maybeSingle())
 }
 
+// Usernames can contain anything, so escape the characters that mean "wildcard" in a search.
+const literal = (text) => text.replace(/[\\%_]/g, (c) => `\\${c}`)
+
 export async function getProfileByUsername(username) {
-  return check(await supabase.from('profiles').select('*').eq('username', username.toLowerCase()).maybeSingle())
+  const rows = check(await supabase.from('profiles').select('*').ilike('username', literal(username.trim())).limit(1))
+  return rows[0] ?? null
 }
 
 export async function saveProfile(profile) {
   const result = await supabase.from('profiles').upsert(profile).select().single()
   if (result.error?.code === '23505') throw new Error('That username is taken. Try another one.')
-  if (result.error?.code === '23514') throw new Error('Usernames are 3–20 characters: lowercase letters, numbers and _ only.')
+  if (result.error?.code === '23514') throw new Error('Usernames need 2–30 characters, without spaces at the start or end.')
   return check(result)
 }
 
 export async function searchProfiles(query, myId) {
-  const q = query.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+  const q = query.trim()
   if (q.length < 2) return []
   return check(
-    await supabase.from('profiles').select('*').ilike('username', `%${q}%`).neq('id', myId).limit(8),
+    await supabase.from('profiles').select('*').ilike('username', `%${literal(q)}%`).neq('id', myId).limit(8),
   )
 }
 

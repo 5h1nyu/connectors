@@ -14,6 +14,7 @@ import { useViewMode } from '../lib/useViewMode'
 import { availability, colorsOf, copyKey, coverOf, deckSize, key } from '../lib/collection'
 import PrintingPicker from './PrintingPicker'
 import VisibilityPicker from './VisibilityPicker'
+import FrontCardDialog from './FrontCardDialog'
 
 // Order card types the way most deck builders do.
 const TYPE_ORDER = ['Creature', 'Planeswalker', 'Instant', 'Sorcery', 'Artifact', 'Enchantment', 'Battle', 'Land']
@@ -70,17 +71,7 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
     <section className="deck-view">
       <PageHeader
         back={{ label: 'Decks', onClick: onBack }}
-        title={
-          <span className="deck-title">
-            {cover && (
-              <button className="cover-thumb" onClick={() => setDialog('cover')} title="Change the cover card's printing">
-                <img src={cover.imageSmall ?? cover.image} alt={`Cover: ${cover.name}`} />
-                <span>Printing</span>
-              </button>
-            )}
-            <span>{deck.name} {deck.brew && <span className="brew-badge inline">Brewing</span>}</span>
-          </span>
-        }
+        title={<>{deck.name} {deck.brew && <span className="brew-badge inline">Brewing</span>}</>}
         subtitle={
           <span className="deck-meta">
             <span className="pips">{colorsOf(deck).map((c) => <span key={c} className={`pip pip-${c}`} />)}</span>
@@ -98,6 +89,23 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
           </>
         }
       />
+
+      {cover && coverEntry && (
+        <div className="front-card">
+          <button className="front-thumb" onClick={() => setDialog('front')} title="Choose a different front card">
+            <img src={cover.imageSmall ?? cover.image} alt="" />
+          </button>
+          <div className="front-info">
+            <span className="muted small">Front card{deck.commander === coverEntry.name ? ' · Commander' : ''}</span>
+            <strong>{coverEntry.name}</strong>
+            <span className="muted small">{cover.setName ? `${cover.setName} · ${cover.set.toUpperCase()} #${cover.number}` : 'Printing unknown'}</span>
+          </div>
+          <div className="row front-actions">
+            <button className="secondary" onClick={() => setDialog('cover')}>Change printing</button>
+            <button className="secondary" onClick={() => setDialog('front')}>Choose a different card</button>
+          </div>
+        </div>
+      )}
 
       {(deck.brew || wanted.length > 0) && (
         <div className="brew-summary">
@@ -211,6 +219,16 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
 
       {dialog === 'delete' && <DeleteDeckDialog deck={deck} onCancel={() => setDialog(null)} onConfirm={onDelete} />}
       {dialog === 'export' && <ExportDialog deck={deck} onClose={() => setDialog(null)} />}
+      {dialog === 'front' && (
+        <FrontCardDialog
+          deck={deck}
+          onCancel={() => setDialog(null)}
+          onPick={(name, opts) => {
+            actions.setFront(deck.id, name, opts)
+            setDialog(null)
+          }}
+        />
+      )}
       {dialog === 'cover' && coverEntry && (
         <PrintingPicker
           name={coverEntry.name}
@@ -218,6 +236,7 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
           onCancel={() => setDialog(null)}
           onPick={(printing) => {
             actions.changePrinting(coverEntry, loc(coverEntry.status), printing)
+            actions.notify(`✓ Front card is now the ${printing.setName} printing.`)
             setDialog(null)
           }}
         />

@@ -136,3 +136,9 @@ export async function autocomplete(query) {
   if (!res.ok) return []
   return (await res.json()).data
 }
+
+// The default printing for each name, in the same order (null where not found). One request for up to 75.
+export async function cardsByName(names) {
+  const { found } = await fetchIdentifiers(names.map((name) => ({ name })))
+  return names.map((n) => found[`n:${n.toLowerCase()}`] ?? null)
+}

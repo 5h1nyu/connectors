@@ -17,7 +17,8 @@ import PageHeader from './components/PageHeader'
 import { useTheme } from './lib/theme'
 import FriendsView from './components/FriendsView'
 import VaultView from './components/VaultView'
-import Avatar from './components/Avatar'
+import HeaderMenu from './components/HeaderMenu'
+import ProfilePage from './components/ProfilePage'
 import { useProfile } from './lib/useProfile'
 import { getProfileByUsername } from './lib/social'
 import { supabase } from './lib/supabase'
@@ -31,7 +32,7 @@ const TABS = [
   ['decks', 'Decks'],
   ['collection', 'Collection'],
   ['friends', 'Friends'],
-  ['settings', 'Settings'],
+  ['me', 'You'], // phones only: the bottom bar's way to your profile (desktop uses the picture menu)
 ]
 
 // "#/u/shinyu" in the address bar means "show shinyu's public profile".
@@ -117,6 +118,19 @@ export default function App() {
     },
     changePrinting: (entry, loc, card) => setState((s) => col.changePrinting(s, entry, loc, card)),
     setCover: (deckId, name) => setState((s) => col.setCover(s, deckId, name)),
+    setFront: (deckId, name, opts) => {
+      setState((s) => col.setFront(s, deckId, name, opts))
+      const deck = state.decks.find((d) => d.id === deckId)
+      setToast({ message: `✓ ${name} is now the front card of ${deck?.name ?? 'the deck'}.` })
+    },
+    notify: (message) => setToast({ message }),
+    adjust: (entry, loc, delta) => {
+      if (delta < 0 && entry.qty === 1) {
+        const undo = snapshotUndo()
+        setState((s) => col.adjustQty(s, entry, loc, delta))
+        setToast({ message: `Removed the last ${entry.name}.`, undo })
+      } else setState((s) => col.adjustQty(s, entry, loc, delta))
+    },
     addLoose: (cards) => {
       setState((s) => col.addLoose(s, cards))
       setToast({ message: `Added ${cards[0].name} to loose cards.` })
@@ -139,7 +153,7 @@ export default function App() {
         <Logo />
         <nav className="main-nav">
           {TABS.map(([id, label]) => (
-            <button key={id} className={tab === id ? 'active' : ''} onClick={() => { if (publicName) leavePublic(); setTab(id); if (id === 'decks') setDeckScreen('shelf') }}>
+            <button key={id} className={`${tab === id || (id === 'me' && tab === 'settings') ? 'active' : ''} nav-${id}`} onClick={() => { if (publicName) leavePublic(); setTab(id); if (id === 'decks') setDeckScreen('shelf') }}>
               <NavIcon name={id} />
               <span>{label}</span>
             </button>
@@ -150,11 +164,15 @@ export default function App() {
             {sync.status === 'synced' ? '✓ Synced' : sync.status === 'saving' ? 'Saving…' : '⚠ Not synced'}
           </span>
         )}
-        {profileState.profile && (
-          <button className="header-avatar" onClick={() => { if (publicName) leavePublic(); setTab('friends') }} title="Your profile">
-            <Avatar profile={profileState.profile} size={34} />
-          </button>
-        )}
+        <HeaderMenu
+          user={sync.user}
+          profile={profileState.profile}
+          onSignOut={() => sync.auth.signOut()}
+          onNavigate={(t) => {
+            if (publicName) leavePublic()
+            setTab(t)
+          }}
+        />
       </header>
 
       {publicName ? (
@@ -168,7 +186,19 @@ export default function App() {
       ) : (
       <main key={tab === 'decks' ? `decks-${deckScreen}` : tab} className="page">
         {tab === 'decks' && !selected && deckScreen !== 'import' && (
-          <DeckShelf decks={state.decks} onOpen={setDeckScreen} onNew={() => setCreating(true)} onImport={() => setDeckScreen('import')} />
+          <DeckShelf
+            decks={state.decks}
+            onOpen={setDeckScreen}
+            onNew={() => setCreating(true)}
+            onImport={() => setDeckScreen('import')}
+            onReorder={(id, toIndex) =>
+              setState((s) => {
+                const decks = s.decks.filter((d) => d.id !== id)
+                decks.splice(toIndex, 0, s.decks.find((d) => d.id === id))
+                return { ...s, decks }
+              })
+            }
+          />
         )}
         {creating && (
           <NewDeckDialog
@@ -231,13 +261,33 @@ export default function App() {
           <FriendsView
             user={sync.user}
             profileState={profileState}
-            onGoToSettings={() => setTab('settings')}
+            onGoToProfile={() => setTab('me')}
+            notify={(message) => setToast({ message })}
+          />
+        )}
+        {tab === 'me' && (
+          <ProfilePage
+            sync={sync}
+            profileState={profileState}
+            decks={state.decks}
+            onDeckVisibility={(id, v) => {
+              actions.setDeckVisibility(id, v)
+              setToast({ message: '✓ Deck sharing updated.' })
+            }}
+            onOpenSettings={() => setTab('settings')}
+            onPreview={() => {
+              window.location.hash = `#/u/${encodeURIComponent(profileState.profile.username)}`
+            }}
             notify={(message) => setToast({ message })}
           />
         )}
         {tab === 'settings' && (
           <div className="stack settings">
-            <PageHeader title="Settings" subtitle="Sync, looks and your data." />
+            <PageHeader
+              back={{ label: 'Your profile', onClick: () => setTab('me') }}
+              title="Settings"
+              subtitle="Looks, sync and your data."
+            />
             <ThemePicker theme={theme} onChange={setTheme} />
             <Account sync={sync} />
             <CardData state={state} onRefresh={(byId) => setState((s) => col.refreshCards(s, byId))} />

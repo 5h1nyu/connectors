@@ -4,12 +4,13 @@
 -- ---------- Profiles: your username, display name, picture and who can see your collection ----------
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
-  username text unique not null check (username ~ '^[a-z0-9_]{3,20}$'),
+  username text unique not null check (char_length(username) between 2 and 30 and username = btrim(username)),
   display_name text check (char_length(display_name) <= 40),
   avatar_url text,
   collection_visibility text not null default 'private' check (collection_visibility in ('private', 'friends', 'public')),
   created_at timestamptz not null default now()
 );
+create unique index if not exists profiles_username_lower on public.profiles (lower(username));
 alter table public.profiles enable row level security;
 grant select on public.profiles to anon, authenticated;
 grant insert, update on public.profiles to authenticated;

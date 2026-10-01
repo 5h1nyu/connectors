@@ -1,5 +1,6 @@
 import { useContext, useLayoutEffect, useRef, useState } from 'react'
 import { PreviewContext } from '../lib/previewContext'
+import Portal from './Portal'
 
 // Hover a card name to see the card (desktop). Click or tap it to open the full card page.
 
@@ -9,7 +10,7 @@ export function CardPreviewProvider({ onOpenCard, children }) {
   return (
     <PreviewContext.Provider value={{ setHover, onOpenCard }}>
       {children}
-      {hover && <HoverPopup {...hover} />}
+      {hover && <Portal><HoverPopup {...hover} /></Portal>}
     </PreviewContext.Provider>
   )
 }

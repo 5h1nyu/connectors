@@ -1,7 +1,9 @@
+import Portal from './Portal'
 // Deleting a deck: was it a mistake (cards never existed) or did you take it apart (keep the cards)?
 export default function DeleteDeckDialog({ deck, onConfirm, onCancel }) {
   const owned = deck.cards.filter((e) => e.status !== 'wanted').reduce((n, e) => n + e.qty, 0)
   return (
+    <Portal>
     <div className="dialog-backdrop" onClick={onCancel}>
       <div className="dialog" onClick={(e) => e.stopPropagation()}>
         <h2>Delete {deck.name}?</h2>
@@ -27,5 +29,6 @@ export default function DeleteDeckDialog({ deck, onConfirm, onCancel }) {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

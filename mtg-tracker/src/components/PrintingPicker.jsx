@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchPrintings } from '../lib/scryfall'
+import Portal from './Portal'
 
 // Pick one printing of a card from a grid of every version Scryfall knows.
 export default function PrintingPicker({ name, currentId, onPick, onCancel }) {
@@ -16,6 +17,7 @@ export default function PrintingPicker({ name, currentId, onPick, onCancel }) {
   )
 
   return (
+    <Portal>
     <div className="dialog-backdrop top" onClick={onCancel}>
       <div className="dialog wide" onClick={(e) => e.stopPropagation()}>
         <div className="row">
@@ -44,5 +46,6 @@ export default function PrintingPicker({ name, currentId, onPick, onCancel }) {
         )}
       </div>
     </div>
+    </Portal>
   )
 }

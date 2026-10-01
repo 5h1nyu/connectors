@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CardSearch from './CardSearch'
 import PrintingPicker from './PrintingPicker'
 import { uploadAvatar } from '../lib/social'
+import Portal from './Portal'
 
 // Change your profile picture: any Magic card's artwork, or a photo of your own.
 export default function AvatarPicker({ userId, onPick, onCancel }) {
@@ -22,6 +23,7 @@ export default function AvatarPicker({ userId, onPick, onCancel }) {
   }
 
   return (
+    <Portal>
     <div className="dialog-backdrop top" onClick={onCancel}>
       <div className="dialog" onClick={(e) => e.stopPropagation()}>
         <h2>Profile picture</h2>
@@ -53,5 +55,6 @@ export default function AvatarPicker({ userId, onPick, onCancel }) {
         )}
       </div>
     </div>
+    </Portal>
   )
 }

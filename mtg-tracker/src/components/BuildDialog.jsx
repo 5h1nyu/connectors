@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { finishBuild } from '../lib/collection'
+import Portal from './Portal'
 
 // "Finish building": gather the cards you own into this deck, see what's left to buy.
 export default function BuildDialog({ state, deck, onConfirm, onCancel }) {
@@ -19,6 +20,7 @@ export default function BuildDialog({ state, deck, onConfirm, onCancel }) {
   }
 
   return (
+    <Portal>
     <div className="dialog-backdrop" onClick={onCancel}>
       <div className="dialog" onClick={(e) => e.stopPropagation()}>
         <h2>{deck.brew ? 'Finish building' : 'Get missing cards'} · {deck.name}</h2>
@@ -55,5 +57,6 @@ export default function BuildDialog({ state, deck, onConfirm, onCancel }) {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

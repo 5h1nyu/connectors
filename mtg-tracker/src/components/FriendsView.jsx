@@ -1,38 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
 import Avatar from './Avatar'
-import AvatarPicker from './AvatarPicker'
-import VisibilityPicker from './VisibilityPicker'
 import VaultView from './VaultView'
-import { acceptRequest, getFriendships, profileLink, removeFriendship, searchProfiles, sendRequest } from '../lib/social'
-
-// First time: choose a username so friends can find you.
-function ProfileSetup({ onSave, email }) {
-  const [username, setUsername] = useState(email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20))
-  const [displayName, setDisplayName] = useState('')
-  const [status, setStatus] = useState(null)
-  return (
-    <form
-      className="panel stack setup"
-      onSubmit={async (e) => {
-        e.preventDefault()
-        setStatus({ busy: true })
-        try {
-          await onSave({ username: username.toLowerCase(), display_name: displayName.trim() || null })
-        } catch (err) {
-          setStatus({ error: err.message })
-        }
-      }}
-    >
-      <h2>Pick a username</h2>
-      <p className="muted">This is how friends find you. Lowercase letters, numbers and _ only.</p>
-      <label>Username<input value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} required minLength={3} maxLength={20} pattern="[a-z0-9_]+" /></label>
-      <label>Display name (optional)<input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} placeholder="e.g. Shinyu" /></label>
-      {status?.error && <p className="error">{status.error}</p>}
-      <div><button disabled={status?.busy}>{status?.busy ? <><span className="spinner" /> Saving…</> : 'Save'}</button></div>
-    </form>
-  )
-}
+import { acceptRequest, getFriendships, removeFriendship, searchProfiles, sendRequest } from '../lib/social'
 
 function PersonRow({ person, onOpen, children }) {
   return (
@@ -49,14 +19,12 @@ function PersonRow({ person, onOpen, children }) {
   )
 }
 
-export default function FriendsView({ user, profileState, onGoToSettings, notify }) {
-  const { profile, status, save } = profileState
+export default function FriendsView({ user, profileState, onGoToProfile, notify }) {
+  const { profile, status } = profileState
   const [links, setLinks] = useState({ friends: [], incoming: [], outgoing: [] })
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [viewing, setViewing] = useState(null)
-  const [picking, setPicking] = useState(false)
-  const [copied, setCopied] = useState(false)
   const [error, setError] = useState(null)
 
   const refresh = useCallback(() => {
@@ -90,7 +58,7 @@ export default function FriendsView({ user, profileState, onGoToSettings, notify
         <div className="panel stack empty-state">
           <h2>Log in to add friends</h2>
           <p className="muted">Friends need an account so your decks can be shared. It's free and takes a minute.</p>
-          <div><button onClick={onGoToSettings}>Log in or create an account</button></div>
+          <div><button onClick={onGoToProfile}>Log in or create an account</button></div>
         </div>
       </section>
     )
@@ -108,7 +76,11 @@ export default function FriendsView({ user, profileState, onGoToSettings, notify
     return (
       <section>
         <PageHeader title="Friends" subtitle="First, make yourself findable." />
-        <ProfileSetup onSave={save} email={user.email} />
+        <div className="panel stack empty-state">
+          <h2>Pick a username first</h2>
+          <p className="muted">Friends find you by your username. It only takes a second.</p>
+          <div><button onClick={onGoToProfile}>Set up my profile</button></div>
+        </div>
       </section>
     )
   }
@@ -121,27 +93,6 @@ export default function FriendsView({ user, profileState, onGoToSettings, notify
     <section className="friends">
       <PageHeader title="Friends" subtitle={`${links.friends.length} friend${links.friends.length === 1 ? '' : 's'}`} />
       {error && <div className="notice error">{error}</div>}
-
-      <div className="panel profile-card">
-        <button className="avatar-edit" onClick={() => setPicking(true)} title="Change profile picture">
-          <Avatar profile={profile} size={84} />
-          <span className="edit-label">Change</span>
-        </button>
-        <div className="profile-info">
-          <h2>{profile.display_name || profile.username}</h2>
-          <p className="muted">@{profile.username}</p>
-          <div className="row">
-            <button className="secondary small-btn" onClick={() => navigator.clipboard.writeText(profileLink(profile.username)).then(() => setCopied(true))}>
-              {copied ? '✓ Link copied' : 'Copy my profile link'}
-            </button>
-          </div>
-        </div>
-        <div className="profile-visibility">
-          <span className="muted small">Who can see your loose cards</span>
-          <VisibilityPicker value={profile.collection_visibility} onChange={(v) => save({ collection_visibility: v }).then(() => notify('Collection visibility saved.'))} />
-          <span className="muted small">Each deck has its own setting on its page.</span>
-        </div>
-      </div>
 
       <div className="friends-grid">
         <div className="panel">
@@ -203,21 +154,6 @@ export default function FriendsView({ user, profileState, onGoToSettings, notify
         </div>
       </div>
 
-      {picking && (
-        <AvatarPicker
-          userId={user.id}
-          onCancel={() => setPicking(false)}
-          onPick={async (url) => {
-            setPicking(false)
-            try {
-              await save({ avatar_url: url })
-              notify('Profile picture updated.')
-            } catch (err) {
-              setError(err.message)
-            }
-          }}
-        />
-      )}
     </section>
   )
 }

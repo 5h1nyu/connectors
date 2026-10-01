@@ -1,3 +1,4 @@
+import Portal from './Portal'
 // "Are you sure?" before removing cards, showing exactly which ones you picked.
 // copies: [{ entry, label }]  (label = where the copy is, e.g. "Loose cards" or a deck name)
 export default function ConfirmRemoveDialog({ copies, onConfirm, onCancel }) {
@@ -6,6 +7,7 @@ export default function ConfirmRemoveDialog({ copies, onConfirm, onCancel }) {
   const wantedOnly = copies.every((c) => c.entry.status === 'wanted')
 
   return (
+    <Portal>
     <div className="dialog-backdrop top" onClick={onCancel}>
       <div className="dialog wide confirm-remove" onClick={(e) => e.stopPropagation()} role="alertdialog" aria-labelledby="confirm-title">
         <h2 id="confirm-title">Remove {total} card{total === 1 ? '' : 's'}?</h2>
@@ -35,5 +37,6 @@ export default function ConfirmRemoveDialog({ copies, onConfirm, onCancel }) {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

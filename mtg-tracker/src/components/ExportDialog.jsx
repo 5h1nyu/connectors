@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { exportDeck } from '../lib/collection'
+import Portal from './Portal'
 
 // Get a decklist out to Moxfield, Archidekt or Tabletop Simulator.
 export default function ExportDialog({ deck, onClose }) {
@@ -16,6 +17,7 @@ export default function ExportDialog({ deck, onClose }) {
   }
 
   return (
+    <Portal>
     <div className="dialog-backdrop" onClick={onClose}>
       <div className="dialog" onClick={(e) => e.stopPropagation()}>
         <h2>Export {deck.name}</h2>
@@ -34,5 +36,6 @@ export default function ExportDialog({ deck, onClose }) {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

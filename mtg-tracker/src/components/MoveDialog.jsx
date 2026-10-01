@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import CardSearch from './CardSearch'
+import Portal from './Portal'
 
 // Move some copies of a card anywhere: another deck, swapped out, loose, or out of your collection.
 export default function MoveDialog({ entry, from, decks, allowReplacement, onConfirm, onCancel }) {
@@ -26,6 +27,7 @@ export default function MoveDialog({ entry, from, decks, allowReplacement, onCon
   }
 
   return (
+    <Portal>
     <div className="dialog-backdrop top" onClick={onCancel}>
       <form
         className="dialog"
@@ -71,5 +73,6 @@ export default function MoveDialog({ entry, from, decks, allowReplacement, onCon
         </div>
       </form>
     </div>
+    </Portal>
   )
 }

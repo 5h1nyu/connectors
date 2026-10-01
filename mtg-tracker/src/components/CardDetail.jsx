@@ -2,6 +2,8 @@ import { useState } from 'react'
 import MoveDialog from './MoveDialog'
 import PrintingPicker from './PrintingPicker'
 import { useTilt } from '../lib/useTilt'
+import ConfirmRemoveDialog from './ConfirmRemoveDialog'
+import Portal from './Portal'
 
 const COLOR_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' }
 
@@ -10,10 +12,12 @@ export default function CardDetail({ card, item, wantedIn = [], decks, actions, 
   const [flipped, setFlipped] = useState(false)
   const [moving, setMoving] = useState(null) // a copy from item.copies
   const [reprinting, setReprinting] = useState(null)
+  const [removing, setRemoving] = useState(null)
 
   const { ref: tiltRef, onPointerMove, onPointerLeave } = useTilt(8)
 
   return (
+    <Portal>
     <div className="dialog-backdrop" onClick={onClose}>
       <div className="dialog card-detail" onClick={(e) => e.stopPropagation()}>
         <button className="icon close" onClick={onClose} aria-label="Close">✕</button>
@@ -73,23 +77,32 @@ export default function CardDetail({ card, item, wantedIn = [], decks, actions, 
                 <li key={i}>
                   {copy.entry.card?.imageSmall && <img className="thumb" src={copy.entry.card.imageSmall} alt="" />}
                   <span className="copy-info">
-                    <strong>{copy.entry.qty}× {copy.label}</strong>
+                    <strong>{copy.label}</strong>
                     <small className="muted">
                       {copy.entry.card?.set ? `${copy.entry.card.set.toUpperCase()} #${copy.entry.card.number}` : 'unknown printing'}
                     </small>
                   </span>
+                  <span className="qty-stepper" aria-label="How many">
+                    <button className="secondary" title="One fewer" onClick={() => actions.adjust(copy.entry, copy.loc, -1)}>−</button>
+                    <span>{copy.entry.qty}</span>
+                    <button className="secondary" title="One more" onClick={() => actions.adjust(copy.entry, copy.loc, 1)}>+</button>
+                  </span>
                   <span className="row copy-actions">
-                    <button className="secondary small-btn" onClick={() => setMoving(copy)}>Move</button>
                     <button className="secondary small-btn" onClick={() => setReprinting(copy)}>Printing</button>
-                    {copy.loc.type === 'deck' && copy.loc.status === 'active' && (
-                      <button
-                        className="secondary small-btn"
-                        title="Show this card on top of the deck"
-                        onClick={() => actions.setCover(copy.loc.deckId, copy.entry.name)}
-                      >
-                        ★ Cover
-                      </button>
-                    )}
+                    <button className="secondary small-btn" onClick={() => setMoving(copy)}>Move</button>
+                    {copy.loc.type === 'deck' && copy.loc.status !== 'out' && (() => {
+                      const isFront = decks.find((d) => d.id === copy.loc.deckId)?.cover === copy.entry.name
+                      return (
+                        <button
+                          className={`secondary small-btn front-btn ${isFront ? 'is-front' : ''}`}
+                          title="Show this card on the front of the deck"
+                          onClick={() => actions.setFront(copy.loc.deckId, copy.entry.name)}
+                        >
+                          {isFront ? '✓ Front card' : '★ Make front card'}
+                        </button>
+                      )
+                    })()}
+                    <button className="secondary small-btn danger" onClick={() => setRemoving(copy)}>Remove</button>
                   </span>
                 </li>
               ))}
@@ -101,6 +114,16 @@ export default function CardDetail({ card, item, wantedIn = [], decks, actions, 
         </div>
       </div>
 
+      {removing && (
+        <ConfirmRemoveDialog
+          copies={[removing]}
+          onCancel={() => setRemoving(null)}
+          onConfirm={() => {
+            actions.move(removing.entry, removing.loc, { type: 'gone' }, removing.entry.qty)
+            setRemoving(null)
+          }}
+        />
+      )}
       {moving && (
         <MoveDialog
           entry={moving.entry}
@@ -127,5 +150,6 @@ export default function CardDetail({ card, item, wantedIn = [], decks, actions, 
         />
       )}
     </div>
+    </Portal>
   )
 }

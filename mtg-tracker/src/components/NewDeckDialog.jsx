@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CardSearch from './CardSearch'
 import PrintingPicker from './PrintingPicker'
 import { lookupEntries } from '../lib/scryfall'
+import Portal from './Portal'
 
 // Start a brand-new deck: a name and (optionally) a commander. Cards get added on the next screen.
 export default function NewDeckDialog({ onCreate, onImport, onCancel }) {
@@ -29,6 +30,7 @@ export default function NewDeckDialog({ onCreate, onImport, onCancel }) {
   }
 
   return (
+    <Portal>
     <div className="dialog-backdrop" onClick={onCancel}>
       <form className="dialog" onClick={(e) => e.stopPropagation()} onSubmit={create}>
         <h2>Build a new deck</h2>
@@ -59,5 +61,6 @@ export default function NewDeckDialog({ onCreate, onImport, onCancel }) {
         )}
       </form>
     </div>
+    </Portal>
   )
 }

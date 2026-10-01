@@ -99,7 +99,11 @@ by username, and send/accept requests. Every deck has a **Private / Friends / Pu
 and your loose cards have one on the Friends tab. Public things show up on your profile link
 (`…/connectors/#/u/your-username`), which works for anyone, even without an account.
 
+Your own profile (picture, names, link, and who can see each deck) lives under **your picture in the top
+right → Your profile** (or the **You** tab on phones). Settings are in the same menu.
+
 **One-time setup:** in Supabase → **SQL Editor** → New query, paste `supabase/social.sql` and click **Run**.
+If you ran an older copy of it before, also run `supabase/usernames-v2.sql` (lets usernames use any characters).
 It creates the profiles and friendships tables, the sharing rules, and storage for profile photos. Sharing
 only shows what you've synced, so stay logged in.
 
@@ -130,7 +134,7 @@ only shows what you've synced, so stay logged in.
 | `src/components/CardDetail.jsx` | The card page: details, prices, your copies and what to do with them |
 | `src/components/MoveDialog.jsx` | Move copies between decks, loose, or out of your collection |
 | `src/components/PrintingPicker.jsx` | Grid of every printing to choose from |
-| `src/components/DeckShelf.jsx` | Decks as 3D card stacks: they tilt, riffle-shuffle and fan out on hover |
+| `src/components/DeckShelf.jsx` | Decks as 3D card stacks that tilt and fan out on hover; sorting and drag-to-reorder |
 | `src/components/CardImage.jsx` | A clickable card picture used in the picture views |
 | `src/components/ExportDialog.jsx` | Export a deck for Tabletop Simulator or Moxfield/Archidekt |
 | `src/components/NewDeckDialog.jsx` | "Build a new deck": name + optional commander |
@@ -141,14 +145,19 @@ only shows what you've synced, so stay logged in.
 | `src/components/ThemePicker.jsx` | Settings → Look: three vibes plus 15 Magic colour themes (mono + guilds) |
 | `src/components/NavIcon.jsx` | Icons for the navigation (bottom bar on phones) |
 | `src/lib/theme.js` | Remembers your colour theme on this device |
-| `src/lib/shuffle.js` | The riffle-shuffle-then-fan animation for deck stacks |
 | `src/lib/social.js` | Profiles, friend requests and shared vaults (Supabase) |
 | `src/lib/useProfile.js` | Loads and saves your own profile |
-| `src/components/FriendsView.jsx` | The Friends tab: profile, add friends, requests, friends list |
+| `src/components/FriendsView.jsx` | The Friends tab: add friends, requests, friends list |
+| `src/components/ProfilePage.jsx` | Your profile: picture, names, link, who can see each deck |
+| `src/components/HeaderMenu.jsx` | Your picture in the corner: profile, settings, log out |
+| `src/components/FrontCardDialog.jsx` | Choose which card is on the front of a deck |
+| `src/components/CardSearch.jsx` | Card search with live suggestions, thumbnails and a hover preview |
+| `src/components/Portal.jsx` | Makes popups open over the screen, wherever you are on the page |
 | `src/components/VaultView.jsx` | Someone's shared decks and collection (friends or public link) |
 | `src/components/AvatarPicker.jsx` | Profile picture from card art or an uploaded photo |
 | `src/components/VisibilityPicker.jsx` | Private / Friends / Public switch |
 | `supabase/social.sql` | Database setup for friends and sharing (run once) |
+| `supabase/usernames-v2.sql` | Update for older setups: any characters in usernames |
 | `src/lib/useTilt.js` | Makes cards and deck stacks lean towards the mouse (3D) with a moving shine |
 | `src/components/RingInscription.jsx` | Circles of glowing Tengwar (logo, background, card backs) |
 | `src/components/Backdrop.jsx` | The slowly turning rings of writing behind every page |

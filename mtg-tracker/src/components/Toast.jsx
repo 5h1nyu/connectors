@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import Portal from './Portal'
 
 // A small message at the bottom of the screen, with an optional Undo button. Disappears after 8 seconds.
 export default function Toast({ message, onUndo, onClose }) {
@@ -8,9 +9,11 @@ export default function Toast({ message, onUndo, onClose }) {
   }, [message, onClose])
 
   return (
+    <Portal>
     <div className="toast" role="status">
       <span>{message}</span>
       {onUndo && <button className="link" onClick={() => { onUndo(); onClose() }}>Undo</button>}
     </div>
+    </Portal>
   )
 }
