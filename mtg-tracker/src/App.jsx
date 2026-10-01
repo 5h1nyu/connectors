@@ -10,6 +10,8 @@ import CardData from './components/CardData'
 import CardDetail from './components/CardDetail'
 import Toast from './components/Toast'
 import Logo from './components/Logo'
+import Backdrop from './components/Backdrop'
+import { RING_LINE } from './lib/ringVerse'
 import { CardPreviewProvider } from './components/CardPreview'
 import { loadState, saveState } from './lib/storage'
 import { lookupEntries } from './lib/scryfall'
@@ -93,6 +95,7 @@ export default function App() {
 
   return (
     <CardPreviewProvider onOpenCard={setDetailCard}>
+      <Backdrop />
       <header className="app-header">
         <h1 className="brand-h1"><Logo /></h1>
         <nav className="tabs">
@@ -107,6 +110,7 @@ export default function App() {
             {sync.status === 'synced' ? '✓ Synced' : sync.status === 'saving' ? 'Saving…' : '⚠ Not synced'}
           </span>
         )}
+        <div className="inscription-line tengwar" aria-hidden="true">{RING_LINE}</div>
       </header>
 
       <main>

@@ -7,6 +7,7 @@ import DeleteDeckDialog from './DeleteDeckDialog'
 import ExportDialog from './ExportDialog'
 import BuildDialog from './BuildDialog'
 import SelectionBar, { MoveToSelect } from './SelectionBar'
+import ConfirmRemoveDialog from './ConfirmRemoveDialog'
 import ViewToggle from './ViewToggle'
 import { useViewMode } from '../lib/useViewMode'
 import { availability, colorsOf, copyKey, deckSize, key } from '../lib/collection'
@@ -25,7 +26,7 @@ const money = (n) => `$${n.toFixed(2)}`
 export default function DeckView({ deck, state, collection, looseCount, actions, onBack, onDelete }) {
   const [view, setView] = useViewMode('deck')
   const [moving, setMoving] = useState(null)
-  const [dialog, setDialog] = useState(null) // 'delete' | 'export' | 'build'
+  const [dialog, setDialog] = useState(null) // 'delete' | 'export' | 'build' | 'remove'
   const [selected, setSelected] = useState(() => new Set())
   const [copied, setCopied] = useState(false)
 
@@ -127,7 +128,7 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
             Mark as bought
           </button>
         )}
-        <button className="danger" onClick={() => { actions.removeMany(picked.map(copyOf)); done() }}>Remove</button>
+        <button className="danger" onClick={() => setDialog('remove')}>Remove…</button>
       </SelectionBar>
 
       <div className={view === 'visual' ? 'deck-columns' : ''}>
@@ -189,6 +190,13 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
 
       {dialog === 'delete' && <DeleteDeckDialog deck={deck} onCancel={() => setDialog(null)} onConfirm={onDelete} />}
       {dialog === 'export' && <ExportDialog deck={deck} onClose={() => setDialog(null)} />}
+      {dialog === 'remove' && (
+        <ConfirmRemoveDialog
+          copies={picked.map((e) => ({ ...copyOf(e), label: e.status === 'out' ? `${deck.name} (swapped out)` : deck.name }))}
+          onCancel={() => setDialog(null)}
+          onConfirm={() => { actions.removeMany(picked.map(copyOf)); done(); setDialog(null) }}
+        />
+      )}
       {dialog === 'build' && (
         <BuildDialog state={state} deck={deck} onCancel={() => setDialog(null)}
           onConfirm={(opts) => { actions.finishBuild(deck.id, opts); setDialog(null) }} />

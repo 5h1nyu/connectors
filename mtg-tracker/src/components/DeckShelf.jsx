@@ -1,4 +1,12 @@
 import { coverOf, colorsOf, deckSize } from '../lib/collection'
+import RingInscription from './RingInscription'
+
+// The back of every card on the shelf: black, with the ring inscription.
+const CardBack = () => (
+  <div className="card-back">
+    <RingInscription size={100} rings={[{ r: 30, fontSize: 6.5 }]} />
+  </div>
+)
 
 // Your decks as little card stacks. Hover one and it fans out to show some of its cards.
 function DeckStack({ deck, onOpen }) {
@@ -15,10 +23,10 @@ function DeckStack({ deck, onOpen }) {
         {fan.map((card, i) => (
           <div key={card.id + i} className="stack-card" style={{ '--i': i - (fan.length - 1) / 2, '--depth': fan.length - 1 - i }}>
             <img src={card.imageSmall ?? card.image} alt="" loading="lazy" />
-            {i < fan.length - 1 && <div className="card-back" />}
+            {i < fan.length - 1 && <CardBack />}
           </div>
         ))}
-        {fan.length === 0 && <div className="stack-card"><div className="card-back" /></div>}
+        {fan.length === 0 && <div className="stack-card"><CardBack /></div>}
         {deck.brew && <span className="brew-ribbon">⚒ Brewing</span>}
       </div>
       <span className="deck-label">

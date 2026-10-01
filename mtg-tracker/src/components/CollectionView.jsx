@@ -5,6 +5,7 @@ import AddCardForm from './AddCardForm'
 import Places from './Places'
 import ViewToggle from './ViewToggle'
 import SelectionBar, { MoveToSelect } from './SelectionBar'
+import ConfirmRemoveDialog from './ConfirmRemoveDialog'
 import { useViewMode } from '../lib/useViewMode'
 import { copyKey } from '../lib/collection'
 
@@ -15,6 +16,7 @@ export default function CollectionView({ collection, decks, onAddLoose, onMoveMa
   const [filter, setFilter] = useState('all')
   const [view, setView] = useViewMode('collection')
   const [selected, setSelected] = useState(() => new Set())
+  const [confirming, setConfirming] = useState(false)
 
   const items = useMemo(() => [...collection.values()].sort((a, b) => a.name.localeCompare(b.name)), [collection])
   const matches = (c) => filter === 'all' || (filter === 'loose' && c.loc.type === 'loose') || (filter === 'out' && c.loc.status === 'out')
@@ -63,7 +65,7 @@ export default function CollectionView({ collection, decks, onAddLoose, onMoveMa
 
       <SelectionBar count={picked.reduce((n, c) => n + c.entry.qty, 0)} onClear={done}>
         <MoveToSelect decks={decks} onMove={(to) => { onMoveMany(picked, to); done() }} />
-        <button className="danger" onClick={() => { onRemoveMany(picked); done() }}>Remove from collection</button>
+        <button className="danger" onClick={() => setConfirming(true)}>Remove from collection…</button>
       </SelectionBar>
 
       {view === 'visual' ? (
@@ -105,6 +107,13 @@ export default function CollectionView({ collection, decks, onAddLoose, onMoveMa
         </table>
       )}
       {shown.length === 0 && <p className="muted">No cards here yet.</p>}
+      {confirming && (
+        <ConfirmRemoveDialog
+          copies={picked}
+          onCancel={() => setConfirming(false)}
+          onConfirm={() => { onRemoveMany(picked); done(); setConfirming(false) }}
+        />
+      )}
       {shown.length > 0 && <p className="muted small">Tick cards to move or remove several at once. Click a card for its details.</p>}
     </section>
   )

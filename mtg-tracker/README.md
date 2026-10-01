@@ -125,7 +125,11 @@ account can read or change your row.
 | `src/components/NewDeckDialog.jsx` | "Build a new deck": name + optional commander |
 | `src/components/BuildDialog.jsx` | "Finish building": gather owned cards, see what's left to buy |
 | `src/components/SelectionBar.jsx` | The bar for ticked cards (move / remove many at once) |
-| `src/components/Logo.jsx` | The gold ring logo |
+| `src/components/Logo.jsx` | The ring logo with the Tengwar inscription |
+| `src/components/RingInscription.jsx` | Circles of glowing Tengwar (logo, background, card backs) |
+| `src/components/Backdrop.jsx` | The slowly turning rings of writing behind every page |
+| `src/components/ConfirmRemoveDialog.jsx` | "Are you sure?" showing exactly which cards will be removed |
+| `src/lib/ringVerse.js` | The Ring verse in Tengwar characters |
 
 ## Roadmap
 
@@ -136,3 +140,10 @@ account can read or change your row.
 - [x] Step 4: online with GitHub Pages
 - [x] Step 5: sync between phone and PC with Supabase (needs `src/config.js` filled in)
 - [ ] Later: "build this brew" (move cards out of other decks automatically), shop price comparison, binders as separate locations
+
+## Credits
+
+- Card data and images: [Scryfall](https://scryfall.com). Precon lists: [MTGJSON](https://mtgjson.com).
+- Tengwar lettering: [Alcarin Tengwar](https://github.com/Tosche/Alcarin-Tengwar) by Toshi Omagari, the
+  typeface used on The One Ring card, under the SIL Open Font License (`public/fonts/AlcarinTengwar-OFL.txt`).
+  The inscription is the Ring verse in Black Speech from the font's sample texts.
