@@ -14,7 +14,7 @@ import Backdrop from './components/Backdrop'
 import ThemePicker from './components/ThemePicker'
 import NavIcon from './components/NavIcon'
 import PageHeader from './components/PageHeader'
-import { useTheme } from './lib/theme'
+import { useBrandFont, useTheme } from './lib/theme'
 import FriendsView from './components/FriendsView'
 import VaultView from './components/VaultView'
 import HeaderMenu from './components/HeaderMenu'
@@ -49,7 +49,8 @@ export default function App() {
   const [detailCard, setDetailCard] = useState(null) // card shown on the full card page
   const [toast, setToast] = useState(null) // { message, undo }
   const sync = useCloudSync(state, setState)
-  const [theme, setTheme] = useTheme()
+  const themeState = useTheme()
+  const [brandFont, setBrandFont] = useBrandFont()
   const profileState = useProfile(sync.user)
   const [publicName, setPublicName] = useState(readProfileHash) // viewing someone's link: #/u/username
   const [publicProfile, setPublicProfile] = useState(null)
@@ -288,7 +289,7 @@ export default function App() {
               title="Settings"
               subtitle="Looks, sync and your data."
             />
-            <ThemePicker theme={theme} onChange={setTheme} />
+            <ThemePicker themeState={themeState} font={brandFont} onFont={setBrandFont} />
             <Account sync={sync} />
             <CardData state={state} onRefresh={(byId) => setState((s) => col.refreshCards(s, byId))} />
             <Backup state={state} onRestore={setState} />

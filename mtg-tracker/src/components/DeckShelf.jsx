@@ -126,11 +126,12 @@ export default function DeckShelf({ decks, onOpen, onNew, onImport, onReorder })
         subtitle={decks.length ? `${decks.length} deck${decks.length === 1 ? '' : 's'} · ${total} cards` : 'Build your first deck or add one you own.'}
         actions={
           <>
-            {decks.length > 1 && (
-              <select className="sort-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort decks">
+            <label className="sort-label">
+              <span>Sort by</span>
+              <select className="sort-select" value={sort} onChange={(e) => setSort(e.target.value)}>
                 {Object.entries(SORTS).map(([id, s]) => <option key={id} value={id}>{s.label}</option>)}
               </select>
-            )}
+            </label>
             <button className="secondary" onClick={onImport}>Import</button>
             <button onClick={onNew}>New deck</button>
           </>

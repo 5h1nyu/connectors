@@ -142,9 +142,9 @@ only shows what you've synced, so stay logged in.
 | `src/components/SelectionBar.jsx` | The bar for ticked cards (move / remove many at once) |
 | `src/components/Logo.jsx` | The ring logo with the Tengwar inscription |
 | `src/components/PageHeader.jsx` | The big title + subtitle + buttons at the top of every page |
-| `src/components/ThemePicker.jsx` | Settings → Look: three vibes plus 15 Magic colour themes (mono + guilds) |
+| `src/components/ThemePicker.jsx` | Settings → Look: your own two colours, 15 Magic colour pairs, and the title font |
 | `src/components/NavIcon.jsx` | Icons for the navigation (bottom bar on phones) |
-| `src/lib/theme.js` | Remembers your colour theme on this device |
+| `src/lib/theme.js` | Works out every colour from a primary + accent, and remembers your theme and title font |
 | `src/lib/social.js` | Profiles, friend requests and shared vaults (Supabase) |
 | `src/lib/useProfile.js` | Loads and saves your own profile |
 | `src/components/FriendsView.jsx` | The Friends tab: add friends, requests, friends list |

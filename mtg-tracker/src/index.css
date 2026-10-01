@@ -32,46 +32,6 @@
   --shadow: 0 10px 30px rgb(0 0 0 / 0.35);
   color-scheme: dark;
 }
-[data-theme='ember'] {
-  --bg: #16120f;
-  --surface: #1e1915;
-  --surface-2: #28211c;
-  --line: rgb(255 240 225 / 0.07);
-  --line-strong: rgb(255 240 225 / 0.14);
-  --text: #f2e9e0;
-  --muted: #a6988b;
-  --accent: #f2a56f;
-  --accent-ink: #1f1209;
-  --accent-soft: rgb(242 165 111 / 0.13);
-  --sigil: #f2a56f;
-  --sigil-opacity: 0.09;
-  --green: #a9d48a;
-  --blue: #9cc6e8;
-  --gold: #f3cf7a;
-  --red: #ff8a73;
-  --shadow: 0 10px 30px rgb(0 0 0 / 0.35);
-  color-scheme: dark;
-}
-[data-theme='chalk'] {
-  --bg: #f3f2ee;
-  --surface: #ffffff;
-  --surface-2: #f7f6f2;
-  --line: rgb(20 20 30 / 0.08);
-  --line-strong: rgb(20 20 30 / 0.16);
-  --text: #1d1e23;
-  --muted: #6c6f79;
-  --accent: #e2583e;
-  --accent-ink: #ffffff;
-  --accent-soft: rgb(226 88 62 / 0.1);
-  --sigil: #1d1e23;
-  --sigil-opacity: 0.05;
-  --green: #2f8a4c;
-  --blue: #2c6fbf;
-  --gold: #a87414;
-  --red: #c9432b;
-  --shadow: 0 8px 24px rgb(20 20 30 / 0.08);
-  color-scheme: light;
-}
 
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
@@ -122,7 +82,10 @@ main { max-width: 1180px; margin: 0 auto; padding: 32px 24px 96px; }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 10px; }
-.brand-name { font-weight: 700; font-size: 1.1rem; letter-spacing: -0.01em; white-space: nowrap; }
+.brand-name {
+  font-family: var(--brand-font, 'Uncial Antiqua', serif); font-weight: 700; font-size: 1.15rem; letter-spacing: 0.06em;
+  text-transform: uppercase; white-space: nowrap; color: var(--text);
+}
 .logo-ring { width: 30px; height: 30px; }
 .logo-ring .ring-band { stroke: var(--accent); }
 .logo-ring .ring-text { fill: var(--accent-ink); }
@@ -384,7 +347,6 @@ button.tag:hover { border-color: var(--line-strong); filter: none; }
 .selection-actions { flex: 1; }
 .selection-bar button.secondary { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 35%, transparent); }
 .selection-bar button.danger { color: var(--red); background: transparent; border-color: color-mix(in srgb, var(--red) 50%, transparent); }
-[data-theme='chalk'] .selection-bar button.danger { color: #ffb4a6; }
 .selection-bar button.link { color: var(--bg); opacity: 0.8; }
 .move-select { padding: 8px 12px; background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 35%, transparent); }
 .move-select option { color: initial; }
@@ -679,3 +641,24 @@ button:active { transform: scale(0.97); }
 .sharing .share-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--line); }
 .sharing .share-row:first-of-type { border-top: none; }
 .share-row > span:first-child { display: flex; flex-direction: column; }
+
+/* Settings → Look */
+.custom-colours {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px; border-radius: 14px;
+  background: var(--surface-2); border: 2px solid transparent;
+}
+.custom-colours.active { border-color: var(--accent); }
+.colour-pick { flex-direction: row; align-items: center; gap: 10px; color: var(--text); cursor: pointer; }
+.colour-pick span { display: flex; flex-direction: column; }
+.colour-pick input[type='color'] {
+  width: 48px; height: 48px; padding: 0; border: 2px solid var(--line-strong); border-radius: 50%; background: none; cursor: pointer;
+}
+.colour-pick input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
+.colour-pick input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
+.colour-pick input[type='color']::-moz-color-swatch { border: none; border-radius: 50%; }
+.swap { font-size: 1.1rem; }
+.font-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.font-option { align-items: center; text-align: center; padding: 16px 10px; }
+.font-sample { font-size: 1.15rem; letter-spacing: 0.05em; color: var(--text); white-space: nowrap; }
+
+.sort-label { flex-direction: row; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; }

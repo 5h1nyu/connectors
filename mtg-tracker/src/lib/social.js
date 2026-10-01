@@ -30,7 +30,16 @@ export async function getProfileByUsername(username) {
 export async function saveProfile(profile) {
   const result = await supabase.from('profiles').upsert(profile).select().single()
   if (result.error?.code === '23505') throw new Error('That username is taken. Try another one.')
-  if (result.error?.code === '23514') throw new Error('Usernames need 2–30 characters, without spaces at the start or end.')
+  if (result.error?.code === '23514') {
+    const name = (profile.username ?? '').trim()
+    if (name.length >= 2 && name.length <= 30) {
+      // The name is fine by the new rules, so the database must still have the old ones.
+      throw new Error(
+        "Your Supabase still has the old username rules (lowercase letters, numbers and _ only). Run supabase/usernames-v2.sql in the Supabase SQL Editor, then try again.",
+      )
+    }
+    throw new Error('Usernames need 2–30 characters.')
+  }
   return check(result)
 }
 

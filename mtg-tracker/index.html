@@ -11,7 +11,7 @@
       try {
         var t = localStorage.getItem('mtg-tracker:theme') || 'midnight'
         var vars = JSON.parse(localStorage.getItem('mtg-tracker:theme-vars') || '{}')
-        document.documentElement.dataset.theme = t.indexOf('mana-') === 0 ? 'mana' : t
+        document.documentElement.dataset.theme = 'mana'
         for (var k in vars) document.documentElement.style.setProperty(k, vars[k])
       } catch (e) {}
     </script>
@@ -19,6 +19,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Title fonts, only the letters of "SHINYU'S VAULT" so they're tiny -->
+    <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@700&family=Bungee&family=Righteous&text=SHINYU'%20VAULT&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>
