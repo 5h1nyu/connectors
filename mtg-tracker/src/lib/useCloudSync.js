@@ -22,7 +22,8 @@ const summary = (s) => `${s.decks.length} decks, ${s.loose.length} loose cards`
 export function useCloudSync(state, replaceState) {
   const [user, setUser] = useState(null)
   const [recovering, setRecovering] = useState(openedFromResetLink) // true after clicking a "reset password" email link
-  const [status, setStatus] = useState('synced') // 'synced' | 'saving' | 'error' while logged in
+  const [status, setStatus] = useState('synced')
+  const [errorDetail, setErrorDetail] = useState(null) // Supabase's own error message, shown in Settings // 'synced' | 'saving' | 'error' while logged in
   const fromCloud = useRef(false) // true while applying downloaded data, so we don't upload it straight back
   const prevState = useRef(state)
   const latest = useRef(state)
@@ -47,8 +48,10 @@ export function useCloudSync(state, replaceState) {
       const updatedAt = await pushCloud(user.id, latest.current)
       writeMeta({ lastSyncedAt: updatedAt, dirty: false })
       setStatus('synced')
-    } catch {
+      setErrorDetail(null)
+    } catch (err) {
       setStatus('error')
+      setErrorDetail([err.code, err.message, err.hint].filter(Boolean).join(' · '))
     }
   }, [user])
 
@@ -78,8 +81,9 @@ export function useCloudSync(state, replaceState) {
       } else {
         upload()
       }
-    } catch {
+    } catch (err) {
       setStatus('error')
+      setErrorDetail([err.code, err.message, err.hint].filter(Boolean).join(' · '))
     }
   }, [user, replaceState, upload])
 
@@ -124,5 +128,5 @@ export function useCloudSync(state, replaceState) {
     signOut: () => supabase.auth.signOut(),
   }
 
-  return { user, recovering, status: !supabase ? 'not-set-up' : user ? status : 'signed-out', auth }
+  return { user, recovering, errorDetail, retry: pull, status: !supabase ? 'not-set-up' : user ? status : 'signed-out', auth }
 }

@@ -78,7 +78,11 @@ export default function Account({ sync }) {
         <p>Logged in as <strong>{user.email}</strong>. Your collection syncs to every device you log in on.</p>
         {message?.ok && <p>{message.ok}</p>}
         <p className={status === 'error' ? 'error' : 'muted'}>{STATUS_TEXT[status]}</p>
-        <div><button className="secondary" onClick={auth.signOut}>Log out</button></div>
+        {status === 'error' && sync.errorDetail && <p className="error small">Details: {sync.errorDetail}</p>}
+        <div className="row">
+          {status === 'error' && <button onClick={sync.retry}>Try again</button>}
+          <button className="secondary" onClick={auth.signOut}>Log out</button>
+        </div>
       </section>
     )
   }
