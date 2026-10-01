@@ -128,5 +128,6 @@ export function useCloudSync(state, replaceState) {
     signOut: () => supabase.auth.signOut(),
   }
 
-  return { user, recovering, errorDetail, retry: pull, status: !supabase ? 'not-set-up' : user ? status : 'signed-out', auth }
+  const lastSyncedAt = status === 'synced' ? readMeta().lastSyncedAt : null
+  return { user, recovering, errorDetail, lastSyncedAt, retry: pull, status: !supabase ? 'not-set-up' : user ? status : 'signed-out', auth }
 }

@@ -1,13 +1,19 @@
 import { useMemo, useState } from 'react'
 import { CardName } from './CardPreview'
+import { useOpenCard } from '../lib/previewContext'
+import CardImage from './CardImage'
 import AddCardForm from './AddCardForm'
 import Places from './Places'
+import { useViewMode } from '../lib/useViewMode'
+import ViewToggle from './ViewToggle'
 
 const money = (n) => `$${n.toFixed(2)}`
 
-export default function CollectionView({ collection, onAddLoose, onRemoveLoose, onOpenDeck }) {
+export default function CollectionView({ collection, onAddLoose, onOpenDeck }) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
+  const [view, setView] = useViewMode('collection')
+  const openCard = useOpenCard()
 
   const items = useMemo(() => [...collection.values()].sort((a, b) => a.name.localeCompare(b.name)), [collection])
   const shown = items.filter(
@@ -19,14 +25,15 @@ export default function CollectionView({ collection, onAddLoose, onRemoveLoose, 
   )
 
   const totalCards = items.reduce((n, i) => n + i.total, 0)
-  const value = items.reduce((n, i) => n + i.total * Number(i.card?.priceUsd ?? 0), 0)
+  const value = items.reduce((n, i) => n + i.copies.reduce((m, c) => m + c.entry.qty * Number(c.entry.card?.priceUsd ?? 0), 0), 0)
 
   return (
     <section className="panel">
-      <h2>My collection</h2>
-      <p className="muted">
-        {items.length} different cards · {totalCards} total · worth about {money(value)}
-      </p>
+      <div className="stats">
+        <div><strong>{items.length}</strong><span>different cards</span></div>
+        <div><strong>{totalCards}</strong><span>cards total</span></div>
+        <div><strong>{money(value)}</strong><span>estimated value</span></div>
+      </div>
 
       <h3>Add loose cards (singles, binder, etc.)</h3>
       <AddCardForm onAdd={onAddLoose} buttonLabel="Add to collection" />
@@ -38,32 +45,38 @@ export default function CollectionView({ collection, onAddLoose, onRemoveLoose, 
           <option value="loose">Have loose copies</option>
           <option value="out">Have swapped-out copies</option>
         </select>
+        <ViewToggle mode={view} onChange={setView} />
       </div>
 
-      <table className="cards-table">
-        <thead>
-          <tr><th>#</th><th>Card</th><th>Where</th><th>Price</th></tr>
-        </thead>
-        <tbody>
-          {shown.map((item) => {
-            const loose = item.places.find((p) => p.loose)
-            return (
+      {view === 'visual' ? (
+        <div className="card-grid binder">
+          {shown.map((item) => (
+            <div key={item.name} className="binder-slot">
+              <CardImage card={item.card} name={item.name} qty={item.total} small />
+              <Places places={item.places} onOpenDeck={onOpenDeck} compact />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <table className="cards-table">
+          <thead>
+            <tr><th>#</th><th>Card</th><th>Where</th><th>Price</th><th /></tr>
+          </thead>
+          <tbody>
+            {shown.map((item) => (
               <tr key={item.name}>
                 <td className="qty">{item.total}</td>
                 <td><CardName card={item.card}>{item.name}</CardName></td>
-                <td>
-                  <Places places={item.places} onOpenDeck={onOpenDeck} />
-                  {loose && (
-                    <button className="icon" title="Remove one loose copy" onClick={() => onRemoveLoose(item.name)}>−</button>
-                  )}
-                </td>
+                <td><Places places={item.places} onOpenDeck={onOpenDeck} /></td>
                 <td className="muted">{item.card?.priceUsd ? `$${item.card.priceUsd}` : ''}</td>
+                <td><button className="secondary small-btn" onClick={() => openCard(item.card)}>Manage</button></td>
               </tr>
-            )
-          })}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      )}
       {shown.length === 0 && <p className="muted">No cards here yet.</p>}
+      {view === 'visual' && shown.length > 0 && <p className="muted small">Click a card to move it, delete it or change its printing.</p>}
     </section>
   )
 }

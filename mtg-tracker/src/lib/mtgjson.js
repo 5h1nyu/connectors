@@ -16,14 +16,18 @@ export async function fetchPreconList() {
   return preconList
 }
 
-// One precon's cards as [{ name, qty }] (commander included).
+// One precon's cards as [{ name, qty, id, commander }], keeping the exact printings from the box.
 export async function fetchPrecon(fileName) {
   const res = await fetch(`${API}/decks/${fileName}.json`)
   if (!res.ok) throw new Error(`MTGJSON returned ${res.status}`)
   const { data } = await res.json()
-  const counts = new Map()
-  for (const c of [...(data.commander ?? []), ...(data.mainBoard ?? [])]) {
-    counts.set(c.name, (counts.get(c.name) ?? 0) + (c.count ?? 1))
-  }
-  return [...counts].map(([name, qty]) => ({ name, qty }))
+  const toEntry = (commander) => (c) => ({
+    name: c.name,
+    qty: c.count ?? 1,
+    id: c.identifiers?.scryfallId,
+    set: c.setCode,
+    number: c.number,
+    commander,
+  })
+  return [...(data.commander ?? []).map(toEntry(true)), ...(data.mainBoard ?? []).map(toEntry(false))]
 }

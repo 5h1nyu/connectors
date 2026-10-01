@@ -4,7 +4,7 @@ import { lookupEntries } from '../lib/scryfall'
 import { fetchPrecon, fetchPreconList } from '../lib/mtgjson'
 import { newDeck } from '../lib/collection'
 
-export default function AddDeckForm({ onAdd }) {
+export default function AddDeckForm({ onAdd, onBack }) {
   const [mode, setMode] = useState('precon')
   const [name, setName] = useState('')
   const [list, setList] = useState('')
@@ -58,6 +58,7 @@ export default function AddDeckForm({ onAdd }) {
 
   return (
     <section className="panel add-deck">
+      <button className="link back" onClick={onBack}>← All decks</button>
       <h2>Add a deck</h2>
       <div className="tabs">
         <button className={mode === 'precon' ? 'active' : ''} onClick={() => setMode('precon')}>Pick a precon</button>
@@ -86,7 +87,7 @@ export default function AddDeckForm({ onAdd }) {
           <input placeholder="Deck name, e.g. Atraxa precon" value={name} onChange={(e) => setName(e.target.value)} />
           <textarea
             rows={10}
-            placeholder={'Paste a decklist, one card per line:\n1 Sol Ring\n1 Command Tower\n...'}
+            placeholder={'Paste a decklist, one card per line:\n1 Sol Ring\n1 Command Tower (C21) 279\n...\n\nPrintings like (C21) 279 are kept.'}
             value={list}
             onChange={(e) => setList(e.target.value)}
           />

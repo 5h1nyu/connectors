@@ -29,6 +29,15 @@ rebuilds it automatically (see `.github/workflows/deploy-mtg-tracker.yml`).
 - **Loose cards**: singles, binder, trade pile, anything not in a deck.
 - **Collection**: everything combined, with tags showing where each copy is.
 
+**Click any card** (in a deck, your collection or the brew checker) to open its card page: big image,
+rules text, prices, buy links, and every copy you own. Each copy has **Move** (to another deck, swapped out,
+loose, or removed from your collection), **Printing** (pick the exact version) and **★ Cover** (show it on
+top of the deck's stack).
+
+Every card is stored under its official Oracle name, even special printings with an alternate name, so
+**Export** gives lists that Tabletop Simulator, Moxfield and Archidekt can import. The picture you see is
+still the printing you chose.
+
 When you take a card out of a deck you choose: keep it crossed off with the deck, move it to loose,
 or remove it (sold/traded). You can name a replacement in the same step. Adding a card to a deck
 takes it from your loose cards if you have one there.
@@ -93,7 +102,13 @@ account can read or change your row.
 | `src/lib/useCloudSync.js` | Decides when to upload/download so devices stay in step |
 | `src/config.js` | Your Supabase project URL + publishable key |
 | `supabase/schema.sql` | The database table + security rules (run once in Supabase) |
-| `src/components/CardPreview.jsx` | The hover popup (tap on phones) |
+| `src/components/CardPreview.jsx` | Card names: hover popup that stays on screen, click opens the card page |
+| `src/components/CardDetail.jsx` | The card page: details, prices, your copies and what to do with them |
+| `src/components/MoveDialog.jsx` | Move copies between decks, loose, or out of your collection |
+| `src/components/PrintingPicker.jsx` | Grid of every printing to choose from |
+| `src/components/DeckShelf.jsx` | Your decks as card stacks that fan out on hover |
+| `src/components/CardImage.jsx` | A clickable card picture used in the picture views |
+| `src/components/ExportDialog.jsx` | Export a deck for Tabletop Simulator or Moxfield/Archidekt |
 
 ## Roadmap
 
