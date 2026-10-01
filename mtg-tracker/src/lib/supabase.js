@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { SUPABASE_KEY, SUPABASE_URL } from '../config'
 
+// Read before Supabase tidies up the address bar: did we arrive from a "reset password" email link?
+export const openedFromResetLink = window.location.hash.includes('type=recovery')
+
 // null until src/config.js is filled in; the app then works offline-only like before.
 export const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null
 

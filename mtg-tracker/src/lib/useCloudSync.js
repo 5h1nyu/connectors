@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { fetchCloud, pushCloud, supabase } from './supabase'
+import { fetchCloud, openedFromResetLink, pushCloud, supabase } from './supabase'
 
 // Keeps this device and your Supabase copy in step.
 //  - Every change you make is uploaded ~1.5s later.
@@ -21,6 +21,7 @@ const summary = (s) => `${s.decks.length} decks, ${s.loose.length} loose cards`
 
 export function useCloudSync(state, replaceState) {
   const [user, setUser] = useState(null)
+  const [recovering, setRecovering] = useState(openedFromResetLink) // true after clicking a "reset password" email link
   const [status, setStatus] = useState('synced') // 'synced' | 'saving' | 'error' while logged in
   const fromCloud = useRef(false) // true while applying downloaded data, so we don't upload it straight back
   const prevState = useRef(state)
@@ -33,7 +34,10 @@ export function useCloudSync(state, replaceState) {
   useEffect(() => {
     if (!supabase) return
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null))
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null)
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -104,12 +108,21 @@ export function useCloudSync(state, replaceState) {
     return () => clearTimeout(timer)
   }, [state, user, upload])
 
+  // Phones often add a space or a capital letter to emails; clean that up.
+  const clean = (email) => email.trim().toLowerCase()
+  const appUrl = window.location.origin + window.location.pathname // where email links send you back to
   const auth = {
-    signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
+    signIn: (email, password) => supabase.auth.signInWithPassword({ email: clean(email), password }),
     signUp: (email, password) =>
-      supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.href.split('#')[0] } }),
+      supabase.auth.signUp({ email: clean(email), password, options: { emailRedirectTo: appUrl } }),
+    resetPassword: (email) => supabase.auth.resetPasswordForEmail(clean(email), { redirectTo: appUrl }),
+    setNewPassword: async (password) => {
+      const result = await supabase.auth.updateUser({ password })
+      if (!result.error) setRecovering(false)
+      return result
+    },
     signOut: () => supabase.auth.signOut(),
   }
 
-  return { user, status: !supabase ? 'not-set-up' : user ? status : 'signed-out', auth }
+  return { user, recovering, status: !supabase ? 'not-set-up' : user ? status : 'signed-out', auth }
 }
