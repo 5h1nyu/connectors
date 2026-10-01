@@ -23,9 +23,23 @@ Once GitHub Pages is switched on (Settings → Pages → Deploy from a branch �
 the app lives at **https://5h1nyu.github.io/connectors/**. Every push to this branch
 rebuilds it automatically (see `.github/workflows/deploy-mtg-tracker.yml`).
 
+## Building a new deck
+
+**Decks → Build a new deck**: give it a name (and a commander if you like), then add cards by searching
+or pasting a list. While it's a *brew*, nothing counts as owned yet; every card shows where you could get
+it: **Loose**, **Spare in…** (swapped out), **In …** (another deck) or **Buy · $price**, with a total
+cost and a copyable buy list. **Finish building** gathers your copies into the deck (loose first, then
+spares, then the decks you tick) and leaves "to buy" markers for the rest. Precons and pasted lists of
+decks you already own live under **Add a precon / paste a list**.
+
+## Doing things to many cards at once
+
+Tick the box on any card (hover a picture to see it) in your collection or a deck. A bar appears at the
+top: **Move to…**, **Swap out**, **Put back in**, **Mark as bought** or **Remove**, all with Undo.
+
 ## How your cards are organised
 
-- **Decks**: each card is either *in the deck* or *swapped out* (crossed off, still in that deck box).
+- **Decks**: each card is *in the deck*, *swapped out* (still in that deck box), or *to buy* (on the list, not owned yet).
 - **Loose cards**: singles, binder, trade pile, anything not in a deck.
 - **Collection**: everything combined, with tags showing where each copy is.
 
@@ -93,7 +107,6 @@ account can read or change your row.
 | `src/components/AddDeckForm.jsx` | Pick a precon or paste a list |
 | `src/components/AddCardForm.jsx` | Add one card (with autocomplete) or paste several |
 | `src/components/CollectionView.jsx` | Every card you own and where it is |
-| `src/components/BrewChecker.jsx` | What you have for a new deck and what to buy |
 | `src/components/Backup.jsx` | Download / restore your data as a file |
 | `src/components/Account.jsx` | Log in / create account for sync |
 | `src/components/CardData.jsx` | Refresh prices & card info from Scryfall |
@@ -109,12 +122,16 @@ account can read or change your row.
 | `src/components/DeckShelf.jsx` | Your decks as card stacks that fan out on hover |
 | `src/components/CardImage.jsx` | A clickable card picture used in the picture views |
 | `src/components/ExportDialog.jsx` | Export a deck for Tabletop Simulator or Moxfield/Archidekt |
+| `src/components/NewDeckDialog.jsx` | "Build a new deck": name + optional commander |
+| `src/components/BuildDialog.jsx` | "Finish building": gather owned cards, see what's left to buy |
+| `src/components/SelectionBar.jsx` | The bar for ticked cards (move / remove many at once) |
+| `src/components/Logo.jsx` | The gold ring logo |
 
 ## Roadmap
 
 - [x] Step 1: add decks by pasting a list, hover any card to see it
 - [x] Edit decks card by card, swapped-out cards, loose cards, full collection view
-- [x] Step 2: Brew checker with buy list
+- [x] Step 2: Brew new decks with a buy list (replaced the separate Brew checker)
 - [x] Step 3: pick a Commander precon from a list (MTGJSON)
 - [x] Step 4: online with GitHub Pages
 - [x] Step 5: sync between phone and PC with Supabase (needs `src/config.js` filled in)

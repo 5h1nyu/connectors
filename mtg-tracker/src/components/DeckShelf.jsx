@@ -4,13 +4,13 @@ import { coverOf, colorsOf, deckSize } from '../lib/collection'
 function DeckStack({ deck, onOpen }) {
   const cover = coverOf(deck)
   const peek = deck.cards
-    .filter((e) => e.status === 'active' && e.card?.image && e.card.id !== cover?.id && !/Basic Land/.test(e.card.typeLine))
+    .filter((e) => e.status !== 'out' && e.card?.image && e.card.id !== cover?.id && !/Basic Land/.test(e.card.typeLine))
     .slice(0, 4)
     .map((e) => e.card)
   const fan = [...peek, cover].filter(Boolean) // cover ends up on top
 
   return (
-    <button className="deck-stack" onClick={onOpen} aria-label={`Open ${deck.name}`}>
+    <button className={`deck-stack ${deck.brew ? 'is-brew' : ''}`} onClick={onOpen} aria-label={`Open ${deck.name}`}>
       <div className="fan">
         {fan.map((card, i) => (
           <div key={card.id + i} className="stack-card" style={{ '--i': i - (fan.length - 1) / 2, '--depth': fan.length - 1 - i }}>
@@ -19,6 +19,7 @@ function DeckStack({ deck, onOpen }) {
           </div>
         ))}
         {fan.length === 0 && <div className="stack-card"><div className="card-back" /></div>}
+        {deck.brew && <span className="brew-ribbon">⚒ Brewing</span>}
       </div>
       <span className="deck-label">
         <strong>{deck.name}</strong>
@@ -31,14 +32,20 @@ function DeckStack({ deck, onOpen }) {
   )
 }
 
-export default function DeckShelf({ decks, onOpen, onNew }) {
+export default function DeckShelf({ decks, onOpen, onNew, onImport }) {
   return (
-    <section className="shelf">
-      {decks.map((deck) => <DeckStack key={deck.id} deck={deck} onOpen={() => onOpen(deck.id)} />)}
-      <button className="deck-stack new-deck" onClick={onNew}>
-        <div className="fan"><div className="stack-card empty">＋</div></div>
-        <span className="deck-label"><strong>Add a deck</strong><span className="muted">Precon or list</span></span>
-      </button>
-    </section>
+    <>
+      <div className="shelf-actions row">
+        <button onClick={onNew}>＋ Build a new deck</button>
+        <button className="secondary" onClick={onImport}>Add a precon / paste a list</button>
+      </div>
+      <section className="shelf">
+        {decks.map((deck) => <DeckStack key={deck.id} deck={deck} onOpen={() => onOpen(deck.id)} />)}
+        <button className="deck-stack new-deck" onClick={onNew}>
+          <div className="fan"><div className="stack-card empty">＋</div></div>
+          <span className="deck-label"><strong>Build a new deck</strong><span className="muted">Start from scratch</span></span>
+        </button>
+      </section>
+    </>
   )
 }

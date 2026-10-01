@@ -2,7 +2,10 @@
 // which is how React likes it (never edit state in place).
 //
 // An entry is { name, qty, card, status }: `card` is the exact printing (card.id), and status is
-// 'active' (in the deck) or 'out' (swapped out, still kept with the deck). Loose cards are 'active'.
+//   'active'  in the deck (you own it)
+//   'out'     swapped out, still kept with the deck (you own it)
+//   'wanted'  on the decklist but you don't own it yet (brews, or cards still to buy)
+// Loose cards are 'active'. Only 'active' and 'out' copies count as your collection.
 //
 // A location says where copies live:
 //   { type: 'deck', deckId, status: 'active' | 'out' }   { type: 'loose' }   { type: 'gone' } (removed)
@@ -82,7 +85,83 @@ export function addLoose(state, cards) {
 export function deleteDeck(state, deckId, keepCards) {
   const deck = state.decks.find((d) => d.id === deckId)
   const next = { ...state, decks: state.decks.filter((d) => d.id !== deckId) }
-  return keepCards ? addLoose(next, deck.cards) : next
+  return keepCards ? addLoose(next, deck.cards.filter((e) => e.status !== 'wanted')) : next
+}
+
+// Put cards on a decklist without owning them yet.
+export function addWanted(state, deckId, cards) {
+  return updateAt(state, { type: 'deck', deckId }, (list) => cards.reduce((l, c) => addEntry(l, c, 'wanted'), list))
+}
+
+// Apply one move to many copies at once: copies = [{ entry, loc }]
+export function moveMany(state, copies, to) {
+  return copies.reduce((s, { entry, loc }) => moveCards(s, entry, loc, to, entry.qty), state)
+}
+
+// Cards you've now got: 'wanted' -> 'active'.
+export function markBought(state, deckId, entries) {
+  const loc = { type: 'deck', deckId, status: 'wanted' }
+  return entries.reduce((s, e) => moveCards(s, e, loc, { type: 'deck', deckId, status: 'active' }, e.qty), state)
+}
+
+// Fill a deck's 'wanted' cards from what you own: loose first, then swapped-out copies,
+// then other decks (only the ones in pullFrom). Cards taken from another deck leave a
+// 'wanted' marker there so you know to replace them. With boughtRest, anything still missing
+// is counted as owned. Returns { state, log } so the dialog can preview what will happen.
+export function finishBuild(state, deckId, { pullFrom = new Set(), boughtRest = false, markMissing = true } = {}) {
+  const to = { type: 'deck', deckId, status: 'active' }
+  const log = { loose: 0, out: 0, decks: {}, buy: 0 }
+  let next = state
+  const deck = state.decks.find((d) => d.id === deckId)
+  for (const want of deck.cards.filter((e) => e.status === 'wanted')) {
+    let remaining = want.qty
+    const item = buildCollection(next).get(key(want.name))
+    const rank = (c) => (c.loc.type === 'loose' ? 0 : c.loc.status === 'out' ? (c.loc.deckId === deckId ? 1 : 2) : 3)
+    const sources = (item?.copies ?? [])
+      .filter((c) => c.loc.type === 'loose' || c.loc.status === 'out' || pullFrom.has(c.loc.deckId))
+      .filter((c) => !(c.loc.type === 'deck' && c.loc.deckId === deckId && c.loc.status === 'active'))
+      .sort((a, b) => rank(a) - rank(b) || (printingOf(b.entry) === printingOf(want)) - (printingOf(a.entry) === printingOf(want)))
+    for (const { entry, loc } of sources) {
+      if (!remaining) break
+      const n = Math.min(remaining, entry.qty)
+      next = moveCards(next, entry, loc, to, n)
+      next = updateAt(next, to, (list) => removeEntry(list, want, n))
+      if (loc.type === 'loose') log.loose += n
+      else if (loc.status === 'out') log.out += n
+      else {
+        log.decks[loc.deckId] = (log.decks[loc.deckId] ?? 0) + n
+        if (markMissing) next = updateAt(next, loc, (list) => addEntry(list, { ...entry, qty: n }, 'wanted'))
+      }
+      remaining -= n
+    }
+    if (remaining) {
+      log.buy += remaining
+      if (boughtRest) next = moveCards(next, { ...want, qty: remaining }, { ...to, status: 'wanted' }, to, remaining)
+    }
+  }
+  next = { ...next, decks: next.decks.map((d) => (d.id === deckId ? { ...d, brew: false } : d)) }
+  return { state: next, log }
+}
+
+// Where you could get each 'wanted' card of a deck from. Returns { [name]: { have, label, kind } }
+export function availability(deck, collection) {
+  const result = {}
+  for (const e of deck.cards.filter((x) => x.status === 'wanted')) {
+    const item = collection.get(key(e.name))
+    const copies = (item?.copies ?? []).filter((c) => !(c.loc.type === 'deck' && c.loc.deckId === deck.id && c.loc.status === 'active'))
+    const loose = copies.find((c) => c.loc.type === 'loose')
+    const out = copies.find((c) => c.loc.status === 'out')
+    const other = copies.find((c) => c.loc.type === 'deck' && c.loc.status === 'active')
+    const have = copies.reduce((n, c) => n + c.entry.qty, 0)
+    result[key(e.name)] = loose
+      ? { have, kind: 'loose', label: 'Loose' }
+      : out
+        ? { have, kind: 'out', label: `Spare in ${out.label.replace(' (swapped out)', '')}` }
+        : other
+          ? { have, kind: 'deck', label: `In ${other.label}` }
+          : { have: 0, kind: 'buy', label: e.card?.priceUsd ? `Buy · $${e.card.priceUsd}` : 'Buy' }
+  }
+  return result
 }
 
 export function setCover(state, deckId, name) {
@@ -91,7 +170,7 @@ export function setCover(state, deckId, name) {
 
 // commander: only when we know it (precon, or a "Commander" heading in a pasted list).
 // cover: the card shown on top of the deck's stack; you can change it on any card's page.
-export function newDeck(name, cards) {
+export function newDeck(name, cards, { brew = false } = {}) {
   const commander = cards.find((c) => c.commander)
   const legend = cards.find((c) => /Legendary Creature/.test(c.card?.typeLine ?? ''))
   return {
@@ -100,23 +179,24 @@ export function newDeck(name, cards) {
     addedAt: Date.now(),
     commander: commander?.name ?? null,
     cover: (commander ?? legend ?? cards[0])?.name ?? null,
-    cards: cards.reduce((list, { name: n, qty, card }) => addEntry(list, { name: n, qty, card }), []),
+    brew,
+    cards: cards.reduce((list, { name: n, qty, card }) => addEntry(list, { name: n, qty, card }, brew ? 'wanted' : 'active'), []),
   }
 }
 
 // The card shown on top of a deck's stack.
 export function coverOf(deck) {
-  const active = deck.cards.filter((e) => e.card?.image)
+  const active = deck.cards.filter((e) => e.card?.image && e.status !== 'out')
   return (active.find((e) => deck.cover && key(e.name) === key(deck.cover)) ?? active[0])?.card ?? null
 }
 
 // All colours in a deck, in WUBRG order.
 export function colorsOf(deck) {
-  const all = new Set(deck.cards.flatMap((e) => (e.status === 'active' ? e.card?.colors ?? [] : [])))
+  const all = new Set(deck.cards.flatMap((e) => (e.status !== 'out' ? e.card?.colors ?? [] : [])))
   return ['W', 'U', 'B', 'R', 'G'].filter((c) => all.has(c))
 }
 
-export const deckSize = (deck) => sum(deck.cards.filter((e) => e.status === 'active'))
+export const deckSize = (deck) => sum(deck.cards.filter((e) => e.status !== 'out'))
 
 // Every card you own in one place, grouped by name:
 // { name, card, total, places: [{ deckId, deckName, swappedOut, loose, qty }], copies: [{ entry, loc, label }] }
@@ -133,7 +213,7 @@ export function buildCollection({ decks, loose }) {
     map.set(key(entry.name), item)
   }
   for (const deck of decks) {
-    for (const e of deck.cards) {
+    for (const e of deck.cards.filter((x) => x.status !== 'wanted')) {
       const out = e.status === 'out'
       add(e, { type: 'deck', deckId: deck.id, status: e.status }, out ? `${deck.name} (swapped out)` : deck.name, {
         deckId: deck.id,
@@ -165,7 +245,7 @@ export function refreshCards(state, byId) {
 export function exportDeck(deck, withPrintings) {
   const line = (e) =>
     `${e.qty} ${e.name}${withPrintings && e.card?.set ? ` (${e.card.set.toUpperCase()}) ${e.card.number}` : ''}`
-  const active = deck.cards.filter((e) => e.status === 'active')
+  const active = deck.cards.filter((e) => e.status !== 'out')
   const isCommander = (e) => deck.commander && key(e.name) === key(deck.commander)
   const commander = active.filter(isCommander)
   const rest = active.filter((e) => !isCommander(e))
@@ -173,3 +253,7 @@ export function exportDeck(deck, withPrintings) {
     ? ['Commander', ...commander.map(line), '', 'Deck', ...rest.map(line)].join('\n')
     : rest.map(line).join('\n')
 }
+
+// A stable id for one group of copies (same card, printing, status and place).
+export const copyKey = ({ entry, loc }) =>
+  `${loc.type}|${loc.deckId ?? ''}|${entry.status}|${key(entry.name)}|${printingOf(entry) ?? ''}`

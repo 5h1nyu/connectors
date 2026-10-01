@@ -3,12 +3,13 @@ import AddDeckForm from './components/AddDeckForm'
 import DeckShelf from './components/DeckShelf'
 import DeckView from './components/DeckView'
 import CollectionView from './components/CollectionView'
-import BrewChecker from './components/BrewChecker'
+import NewDeckDialog from './components/NewDeckDialog'
 import Backup from './components/Backup'
 import Account from './components/Account'
 import CardData from './components/CardData'
 import CardDetail from './components/CardDetail'
 import Toast from './components/Toast'
+import Logo from './components/Logo'
 import { CardPreviewProvider } from './components/CardPreview'
 import { loadState, saveState } from './lib/storage'
 import { lookupEntries } from './lib/scryfall'
@@ -18,14 +19,14 @@ import * as col from './lib/collection'
 const TABS = [
   ['decks', 'Decks'],
   ['collection', 'Collection'],
-  ['brew', 'Brew checker'],
   ['settings', 'Settings'],
 ]
 
 export default function App() {
   const [state, setState] = useState(loadState)
   const [tab, setTab] = useState('decks')
-  const [deckScreen, setDeckScreen] = useState('shelf') // 'shelf' | 'new' | a deck id
+  const [deckScreen, setDeckScreen] = useState('shelf') // 'shelf' | 'import' | a deck id
+  const [creating, setCreating] = useState(false) // the "Build a new deck" dialog
   const [detailCard, setDetailCard] = useState(null) // card shown on the full card page
   const [toast, setToast] = useState(null) // { message, undo }
   const sync = useCloudSync(state, setState)
@@ -50,6 +51,29 @@ export default function App() {
       setState((s) => col.moveCards(s, entry, from, to, qty))
       if (to.type === 'gone') setToast({ message: `Removed ${qty}× ${entry.name}.`, undo: snapshotUndo() })
     },
+    moveMany: (copies, to) => {
+      const undo = snapshotUndo()
+      setState((s) => col.moveMany(s, copies, to))
+      const n = copies.reduce((sum, c) => sum + c.entry.qty, 0)
+      const where = to.type === 'loose' ? 'loose cards' : state.decks.find((d) => d.id === to.deckId)?.name
+      const message = to.status === 'out' ? `Swapped out ${n} card(s).` : `Moved ${n} card(s) to ${where}.`
+      setToast({ message, undo })
+    },
+    removeMany: (copies) => {
+      const undo = snapshotUndo()
+      setState((s) => col.moveMany(s, copies, { type: 'gone' }))
+      setToast({ message: `Removed ${copies.reduce((n, c) => n + c.entry.qty, 0)} card(s).`, undo })
+    },
+    addToDeck: (deck, cards, { takeFromLoose, wanted } = {}) =>
+      setState((s) => (deck.brew || wanted ? col.addWanted(s, deck.id, cards) : col.addToDeck(s, deck.id, cards, takeFromLoose))),
+    markBought: (deckId, entries) => setState((s) => col.markBought(s, deckId, entries)),
+    finishBuild: (deckId, opts) => {
+      const undo = snapshotUndo()
+      const { log } = col.finishBuild(state, deckId, opts)
+      setState((s) => col.finishBuild(s, deckId, opts).state)
+      const taken = log.loose + log.out + Object.values(log.decks).reduce((a, b) => a + b, 0)
+      setToast({ message: `Deck built: ${taken} card(s) gathered${log.buy ? `, ${log.buy} still to buy` : ''}.`, undo })
+    },
     changePrinting: (entry, loc, card) => setState((s) => col.changePrinting(s, entry, loc, card)),
     setCover: (deckId, name) => setState((s) => col.setCover(s, deckId, name)),
     addLoose: (cards) => {
@@ -70,7 +94,7 @@ export default function App() {
   return (
     <CardPreviewProvider onOpenCard={setDetailCard}>
       <header className="app-header">
-        <h1><span className="logo" aria-hidden="true">⛨</span> Shinyu's Vault</h1>
+        <h1 className="brand-h1"><Logo /></h1>
         <nav className="tabs">
           {TABS.map(([id, label]) => (
             <button key={id} className={tab === id ? 'active' : ''} onClick={() => { setTab(id); if (id === 'decks') setDeckScreen('shelf') }}>
@@ -86,10 +110,23 @@ export default function App() {
       </header>
 
       <main>
-        {tab === 'decks' && !selected && deckScreen !== 'new' && (
-          <DeckShelf decks={state.decks} onOpen={setDeckScreen} onNew={() => setDeckScreen('new')} />
+        {tab === 'decks' && !selected && deckScreen !== 'import' && (
+          <DeckShelf decks={state.decks} onOpen={setDeckScreen} onNew={() => setCreating(true)} onImport={() => setDeckScreen('import')} />
         )}
-        {tab === 'decks' && deckScreen === 'new' && (
+        {creating && (
+          <NewDeckDialog
+            onCancel={() => setCreating(false)}
+            onImport={() => { setCreating(false); setDeckScreen('import') }}
+            onCreate={(name, cards) => {
+              const deck = col.newDeck(name, cards, { brew: true })
+              setState((s) => ({ ...s, decks: [...s.decks, deck] }))
+              setCreating(false)
+              setTab('decks')
+              setDeckScreen(deck.id)
+            }}
+          />
+        )}
+        {tab === 'decks' && deckScreen === 'import' && (
           <AddDeckForm
             onBack={() => setDeckScreen('shelf')}
             onAdd={(deck) => {
@@ -102,12 +139,11 @@ export default function App() {
           <DeckView
             key={selected.id}
             deck={selected}
-            decks={state.decks}
+            state={state}
+            collection={collection}
             looseCount={looseCount}
+            actions={actions}
             onBack={() => setDeckScreen('shelf')}
-            onAddCards={(cards, takeFromLoose) => setState((s) => col.addToDeck(s, selected.id, cards, takeFromLoose))}
-            onMove={actions.move}
-            onReplace={(name, qty) => actions.replace(selected.id, name, qty)}
             onDelete={(keepCards) => {
               const undo = snapshotUndo()
               setState((s) => col.deleteDeck(s, selected.id, keepCards))
@@ -126,11 +162,13 @@ export default function App() {
         {tab === 'collection' && (
           <CollectionView
             collection={collection}
+            decks={state.decks}
             onAddLoose={(cards) => setState((s) => col.addLoose(s, cards))}
+            onMoveMany={actions.moveMany}
+            onRemoveMany={actions.removeMany}
             onOpenDeck={openDeck}
           />
         )}
-        {tab === 'brew' && <BrewChecker collection={collection} onOpenDeck={openDeck} />}
         {tab === 'settings' && (
           <div className="stack">
             <Account sync={sync} />
@@ -144,7 +182,10 @@ export default function App() {
         <CardDetail
           card={detailCard}
           item={collection.get(col.key(detailCard.name))}
-          decks={state.decks}
+          wantedIn={state.decks
+            .filter((d) => d.cards.some((e) => e.status === 'wanted' && col.key(e.name) === col.key(detailCard.name)))
+            .map((d) => d.name)}
+          decks={state.decks.filter((d) => !d.brew)}
           actions={actions}
           onClose={() => setDetailCard(null)}
         />

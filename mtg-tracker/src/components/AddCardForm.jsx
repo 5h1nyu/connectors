@@ -5,8 +5,9 @@ import { lookupEntries } from '../lib/scryfall'
 import { parseDecklist } from '../lib/parseDecklist'
 
 // Add one card (with autocomplete and a printing choice) or paste several at once.
-// onAdd receives [{ name, qty, card }]. looseCount(name) is optional: shows "take from loose" when set.
-export default function AddCardForm({ onAdd, looseCount, buttonLabel = 'Add' }) {
+// onAdd receives ([{ name, qty, card }], { takeFromLoose, wanted }).
+// looseCount(name): shows "take from my loose cards". allowWanted: shows "still need to buy these".
+export default function AddCardForm({ onAdd, looseCount, allowWanted, buttonLabel = 'Add', placeholder }) {
   const [mode, setMode] = useState('single')
   const [name, setName] = useState('')
   const [qty, setQty] = useState(1)
@@ -14,6 +15,7 @@ export default function AddCardForm({ onAdd, looseCount, buttonLabel = 'Add' }) 
   const [picking, setPicking] = useState(false)
   const [list, setList] = useState('')
   const [takeFromLoose, setTakeFromLoose] = useState(true)
+  const [wanted, setWanted] = useState(false)
   const [status, setStatus] = useState(null)
 
   const inLoose = looseCount && mode === 'single' && name ? looseCount(name) : 0
@@ -37,7 +39,7 @@ export default function AddCardForm({ onAdd, looseCount, buttonLabel = 'Add' }) 
         ;({ cards, notFound } = await lookupEntries(entries))
       }
       const good = cards.filter((c) => c.card)
-      if (good.length) onAdd(good, looseCount ? takeFromLoose : undefined)
+      if (good.length) onAdd(good, { takeFromLoose: !!looseCount && takeFromLoose, wanted })
       setStatus(notFound.length ? { error: `Not found: ${notFound.join(', ')}` } : { ok: `✓ Added ${good.reduce((n, c) => n + c.qty, 0)} card(s)` })
       if (!notFound.length) {
         changeName('')
@@ -55,7 +57,7 @@ export default function AddCardForm({ onAdd, looseCount, buttonLabel = 'Add' }) 
         {mode === 'single' ? (
           <>
             <input className="qty-input" type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} aria-label="How many" />
-            <CardSearch value={name} onChange={changeName} />
+            <CardSearch value={name} onChange={changeName} placeholder={placeholder} />
           </>
         ) : (
           <textarea rows={5} placeholder={'1 Sol Ring\n1 Arcane Signet (CMM) 381'} value={list} onChange={(e) => setList(e.target.value)} />
@@ -72,7 +74,13 @@ export default function AddCardForm({ onAdd, looseCount, buttonLabel = 'Add' }) 
         <button type="button" className="link" onClick={() => setMode(mode === 'single' ? 'list' : 'single')}>
           {mode === 'single' ? 'Paste a list instead' : 'Add one card instead'}
         </button>
-        {looseCount && (mode === 'list' || inLoose > 0) && (
+        {allowWanted && (
+          <label>
+            <input type="checkbox" checked={wanted} onChange={(e) => setWanted(e.target.checked)} />
+            Still need to buy these
+          </label>
+        )}
+        {looseCount && !wanted && (mode === 'list' || inLoose > 0) && (
           <label>
             <input type="checkbox" checked={takeFromLoose} onChange={(e) => setTakeFromLoose(e.target.checked)} />
             Take from my loose cards{inLoose > 0 && ` (you have ${inLoose})`}

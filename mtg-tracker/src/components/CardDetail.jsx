@@ -5,7 +5,7 @@ import PrintingPicker from './PrintingPicker'
 const COLOR_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' }
 
 // The full card page: big picture, rules text, prices, and every copy you own with buttons to manage them.
-export default function CardDetail({ card, item, decks, actions, onClose }) {
+export default function CardDetail({ card, item, wantedIn = [], decks, actions, onClose }) {
   const [flipped, setFlipped] = useState(false)
   const [moving, setMoving] = useState(null) // a copy from item.copies
   const [reprinting, setReprinting] = useState(null)
@@ -45,6 +45,9 @@ export default function CardDetail({ card, item, decks, actions, onClose }) {
 
           <h3>Your copies {item && `(${item.total})`}</h3>
           {!item && <p className="muted">You don't own this card yet.</p>}
+          {wantedIn.length > 0 && (
+            <p><span className="avail avail-buy">To buy</span> On the list for {wantedIn.join(', ')}</p>
+          )}
           {item && (
             <ul className="copies">
               {item.copies.map((copy, i) => (
