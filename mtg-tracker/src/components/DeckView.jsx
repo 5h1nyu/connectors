@@ -9,6 +9,7 @@ import BuildDialog from './BuildDialog'
 import SelectionBar, { MoveToSelect } from './SelectionBar'
 import ConfirmRemoveDialog from './ConfirmRemoveDialog'
 import ViewToggle from './ViewToggle'
+import PageHeader from './PageHeader'
 import { useViewMode } from '../lib/useViewMode'
 import { availability, colorsOf, copyKey, deckSize, key } from '../lib/collection'
 
@@ -62,21 +63,24 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
   }
 
   return (
-    <section className="panel deck-view">
-      <button className="link back" onClick={onBack}>← All decks</button>
-      <header>
-        <h2>{deck.name}</h2>
-        {deck.brew && <span className="brew-badge">⚒ Brewing</span>}
-        <span className="row pips">
-          {colorsOf(deck).map((c) => <span key={c} className={`pip pip-${c}`} />)}
-          <span className="muted">{deckSize(deck)} cards</span>
-        </span>
-        <span className="row header-actions">
-          <ViewToggle mode={view} onChange={setView} />
-          <button className="secondary" onClick={() => setDialog('export')}>Export</button>
-          <button className="danger" onClick={() => setDialog('delete')}>Delete</button>
-        </span>
-      </header>
+    <section className="deck-view">
+      <PageHeader
+        back={{ label: 'Decks', onClick: onBack }}
+        title={<>{deck.name} {deck.brew && <span className="brew-badge inline">Brewing</span>}</>}
+        subtitle={
+          <span className="deck-meta">
+            <span className="pips">{colorsOf(deck).map((c) => <span key={c} className={`pip pip-${c}`} />)}</span>
+            {deckSize(deck)} cards
+          </span>
+        }
+        actions={
+          <>
+            <ViewToggle mode={view} onChange={setView} />
+            <button className="secondary" onClick={() => setDialog('export')}>Export</button>
+            <button className="secondary danger" onClick={() => setDialog('delete')}>Delete</button>
+          </>
+        }
+      />
 
       {(deck.brew || wanted.length > 0) && (
         <div className="brew-summary">

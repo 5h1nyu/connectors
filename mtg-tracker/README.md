@@ -126,6 +126,10 @@ account can read or change your row.
 | `src/components/BuildDialog.jsx` | "Finish building": gather owned cards, see what's left to buy |
 | `src/components/SelectionBar.jsx` | The bar for ticked cards (move / remove many at once) |
 | `src/components/Logo.jsx` | The ring logo with the Tengwar inscription |
+| `src/components/PageHeader.jsx` | The big title + subtitle + buttons at the top of every page |
+| `src/components/ThemePicker.jsx` | Settings → Look: Midnight, Ember or Chalk |
+| `src/components/NavIcon.jsx` | Icons for the navigation (bottom bar on phones) |
+| `src/lib/theme.js` | Remembers your colour theme on this device |
 | `src/components/RingInscription.jsx` | Circles of glowing Tengwar (logo, background, card backs) |
 | `src/components/Backdrop.jsx` | The slowly turning rings of writing behind every page |
 | `src/components/ConfirmRemoveDialog.jsx` | "Are you sure?" showing exactly which cards will be removed |

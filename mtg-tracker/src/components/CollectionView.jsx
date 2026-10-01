@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import PageHeader from './PageHeader'
 import { CardName } from './CardPreview'
 import CardImage from './CardImage'
 import AddCardForm from './AddCardForm'
@@ -17,6 +18,7 @@ export default function CollectionView({ collection, decks, onAddLoose, onMoveMa
   const [view, setView] = useViewMode('collection')
   const [selected, setSelected] = useState(() => new Set())
   const [confirming, setConfirming] = useState(false)
+  const [adding, setAdding] = useState(false)
 
   const items = useMemo(() => [...collection.values()].sort((a, b) => a.name.localeCompare(b.name)), [collection])
   const matches = (c) => filter === 'all' || (filter === 'loose' && c.loc.type === 'loose') || (filter === 'out' && c.loc.status === 'out')
@@ -39,24 +41,29 @@ export default function CollectionView({ collection, decks, onAddLoose, onMoveMa
   const done = () => setSelected(new Set())
 
   return (
-    <section className="panel">
-      <div className="stats">
-        <div><strong>{items.length}</strong><span>different cards</span></div>
-        <div><strong>{totalCards}</strong><span>cards total</span></div>
-        <div><strong>{money(value)}</strong><span>estimated value</span></div>
-      </div>
+    <section>
+      <PageHeader
+        title="Collection"
+        subtitle={`${totalCards} cards · ${items.length} different · about ${money(value)}`}
+        actions={<button onClick={() => setAdding(!adding)}>{adding ? 'Done adding' : 'Add cards'}</button>}
+      />
 
-      <h3>Add loose cards (singles, binder, etc.)</h3>
-      <AddCardForm onAdd={(cards) => onAddLoose(cards)} buttonLabel="Add to collection" />
+      {adding && (
+        <div className="panel add-panel">
+          <h3>Add cards you own</h3>
+          <p className="muted small">Singles, binder, bulk box: anything not in a deck. Search one card or paste a list.</p>
+          <AddCardForm onAdd={(cards) => onAddLoose(cards)} buttonLabel="Add" />
+        </div>
+      )}
 
-      <div className="row filters">
-        <input placeholder="Search your cards" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All cards</option>
-          <option value="loose">Loose cards only</option>
-          <option value="out">Swapped-out cards only</option>
-        </select>
+      <div className="search-row">
+        <input className="big-search" type="search" placeholder="Search your cards" value={search} onChange={(e) => setSearch(e.target.value)} />
         <ViewToggle mode={view} onChange={setView} />
+      </div>
+      <div className="row chips" role="group" aria-label="Show">
+        {[['all', 'All'], ['loose', 'Loose'], ['out', 'Swapped out']].map(([id, label]) => (
+          <button key={id} className={`chip ${filter === id ? 'active' : ''}`} onClick={() => setFilter(id)}>{label}</button>
+        ))}
       </div>
       <label className="row small select-all">
         <input type="checkbox" checked={allShownSelected} onChange={(e) => setMany(shownKeys, e.target.checked)} />

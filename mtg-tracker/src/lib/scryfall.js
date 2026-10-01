@@ -22,6 +22,7 @@ export function simplify(card) {
     oracleText: card.oracle_text ?? faces.map((f) => `${f.name}\n${f.oracle_text}`).join('\n\n') ?? '',
     image: images.normal ?? null,
     imageSmall: images.small ?? images.normal ?? null,
+    artCrop: images.art_crop ?? null, // just the artwork, for deck tiles
     backImage: faces[1]?.image_uris?.normal ?? null, // double-faced cards
     colors: card.color_identity ?? [],
     set: card.set,

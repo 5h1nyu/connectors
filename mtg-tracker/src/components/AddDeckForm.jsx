@@ -3,6 +3,7 @@ import { parseDecklist } from '../lib/parseDecklist'
 import { lookupEntries } from '../lib/scryfall'
 import { fetchPrecon, fetchPreconList } from '../lib/mtgjson'
 import { newDeck } from '../lib/collection'
+import PageHeader from './PageHeader'
 
 export default function AddDeckForm({ onAdd, onBack }) {
   const [mode, setMode] = useState('precon')
@@ -57,9 +58,9 @@ export default function AddDeckForm({ onAdd, onBack }) {
   const shown = precons?.filter((p) => p.name.toLowerCase().includes(preconSearch.toLowerCase())).slice(0, 50)
 
   return (
-    <section className="panel add-deck">
-      <button className="link back" onClick={onBack}>← All decks</button>
-      <h2>Add a deck</h2>
+    <section className="add-deck">
+      <PageHeader back={{ label: 'Decks', onClick: onBack }} title="Import a deck you own" subtitle="Pick a Commander precon, or paste a list from Moxfield, Archidekt or anywhere." />
+      <div className="panel stack">
       <div className="tabs">
         <button className={mode === 'precon' ? 'active' : ''} onClick={() => setMode('precon')}>Pick a precon</button>
         <button className={mode === 'paste' ? 'active' : ''} onClick={() => setMode('paste')}>Paste a list</button>
@@ -100,6 +101,7 @@ export default function AddDeckForm({ onAdd, onBack }) {
       {status?.notFound && (
         <p className="error">Saved, but Scryfall didn't recognise: {status.notFound.join(', ')}. Check the spelling.</p>
       )}
+      </div>
     </section>
   )
 }

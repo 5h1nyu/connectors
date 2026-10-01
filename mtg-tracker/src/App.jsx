@@ -11,7 +11,10 @@ import CardDetail from './components/CardDetail'
 import Toast from './components/Toast'
 import Logo from './components/Logo'
 import Backdrop from './components/Backdrop'
-import { RING_LINE } from './lib/ringVerse'
+import ThemePicker from './components/ThemePicker'
+import NavIcon from './components/NavIcon'
+import PageHeader from './components/PageHeader'
+import { useTheme } from './lib/theme'
 import { CardPreviewProvider } from './components/CardPreview'
 import { loadState, saveState } from './lib/storage'
 import { lookupEntries } from './lib/scryfall'
@@ -32,6 +35,7 @@ export default function App() {
   const [detailCard, setDetailCard] = useState(null) // card shown on the full card page
   const [toast, setToast] = useState(null) // { message, undo }
   const sync = useCloudSync(state, setState)
+  const [theme, setTheme] = useTheme()
 
   // Save to the browser whenever anything changes.
   useEffect(() => saveState(state), [state])
@@ -97,11 +101,12 @@ export default function App() {
     <CardPreviewProvider onOpenCard={setDetailCard}>
       <Backdrop />
       <header className="app-header">
-        <h1 className="brand-h1"><Logo /></h1>
-        <nav className="tabs">
+        <Logo />
+        <nav className="main-nav">
           {TABS.map(([id, label]) => (
             <button key={id} className={tab === id ? 'active' : ''} onClick={() => { setTab(id); if (id === 'decks') setDeckScreen('shelf') }}>
-              {label}
+              <NavIcon name={id} />
+              <span>{label}</span>
             </button>
           ))}
         </nav>
@@ -110,7 +115,6 @@ export default function App() {
             {sync.status === 'synced' ? '✓ Synced' : sync.status === 'saving' ? 'Saving…' : '⚠ Not synced'}
           </span>
         )}
-        <div className="inscription-line tengwar" aria-hidden="true">{RING_LINE}</div>
       </header>
 
       <main>
@@ -174,7 +178,9 @@ export default function App() {
           />
         )}
         {tab === 'settings' && (
-          <div className="stack">
+          <div className="stack settings">
+            <PageHeader title="Settings" subtitle="Sync, looks and your data." />
+            <ThemePicker theme={theme} onChange={setTheme} />
             <Account sync={sync} />
             <CardData state={state} onRefresh={(byId) => setState((s) => col.refreshCards(s, byId))} />
             <Backup state={state} onRestore={setState} />
