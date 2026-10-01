@@ -1,4 +1,4 @@
-# MTG Deck Tracker
+# Shinyu's Vault
 
 Track which Magic cards you own and which deck each one lives in, so when you brew
 something new you know what to pull from your existing decks and what to buy.
@@ -33,6 +33,42 @@ When you take a card out of a deck you choose: keep it crossed off with the deck
 or remove it (sold/traded). You can name a replacement in the same step. Adding a card to a deck
 takes it from your loose cards if you have one there.
 
+## How it works (plain English)
+
+**Frontend = the app you see.** Everything in `src/` is React code that runs inside your browser.
+GitHub turns it into a plain website (HTML + JavaScript) every time code is pushed, and GitHub Pages
+hosts it for free. There's no server of our own.
+
+**Where card info comes from:**
+- **Scryfall** answers "what is this card?": image, rules text, price, buy link. It's updated daily with
+  new sets, so new cards work as soon as Scryfall has them.
+- **MTGJSON** answers "what's in this precon?". The precon list is downloaded fresh each time you open
+  the picker, so new precons appear once MTGJSON adds them (usually around release).
+- When you add a card, its info is **saved with your collection**. Prices therefore freeze at that
+  moment. Use **Settings → Update prices & card info** to refresh them.
+
+**Backend = Supabase (optional).** Your collection is always saved in the browser first. When you're
+logged in, it's also copied to a Supabase database (one row holding your whole collection) and pulled
+down on your other devices. Supabase also handles logins. Row-level security rules mean only your
+account can read or change your row.
+
+```
+ Phone / PC browser  ──── card lookups ────▶  Scryfall, MTGJSON
+   (the app + a local copy of your data)
+          │
+          └──── login + your collection ────▶  Supabase (database + accounts)
+```
+
+## Setting up sync (Supabase)
+
+1. In your Supabase project: **SQL Editor → New query**, paste `supabase/schema.sql`, click **Run**.
+2. **Authentication → URL Configuration**: set **Site URL** to `https://5h1nyu.github.io/connectors/`.
+3. **Project Settings → API**: copy the **Project URL** and the **publishable** (or `anon`) key into
+   `src/config.js`. Never use the `secret` / `service_role` key.
+4. Open the app → **Settings** → enter email + password → **Create account** → confirm the email → log in.
+5. Optional, after you've made your account: **Authentication → Sign In / Providers** → turn off
+   **Allow new users to sign up**, so nobody else can make an account on your app.
+
 ## How the code is organised
 
 | File | What it does |
@@ -50,6 +86,13 @@ takes it from your loose cards if you have one there.
 | `src/components/CollectionView.jsx` | Every card you own and where it is |
 | `src/components/BrewChecker.jsx` | What you have for a new deck and what to buy |
 | `src/components/Backup.jsx` | Download / restore your data as a file |
+| `src/components/Account.jsx` | Log in / create account for sync |
+| `src/components/CardData.jsx` | Refresh prices & card info from Scryfall |
+| `src/components/DeleteDeckDialog.jsx` | "Added by mistake" vs "took it apart" when deleting |
+| `src/lib/supabase.js` | Reads/writes your collection in Supabase |
+| `src/lib/useCloudSync.js` | Decides when to upload/download so devices stay in step |
+| `src/config.js` | Your Supabase project URL + publishable key |
+| `supabase/schema.sql` | The database table + security rules (run once in Supabase) |
 | `src/components/CardPreview.jsx` | The hover popup (tap on phones) |
 
 ## Roadmap
@@ -59,5 +102,5 @@ takes it from your loose cards if you have one there.
 - [x] Step 2: Brew checker with buy list
 - [x] Step 3: pick a Commander precon from a list (MTGJSON)
 - [x] Step 4: online with GitHub Pages
-- [ ] Step 5: sync between phone and PC (for now: Backup tab)
+- [x] Step 5: sync between phone and PC with Supabase (needs `src/config.js` filled in)
 - [ ] Later: "build this brew" (move cards out of other decks automatically), shop price comparison, binders as separate locations

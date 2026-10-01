@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CardName } from './CardPreview'
 import AddCardForm from './AddCardForm'
 import RemoveCardDialog from './RemoveCardDialog'
+import DeleteDeckDialog from './DeleteDeckDialog'
 
 // Order card types the way most deck builders do.
 const TYPE_ORDER = ['Creature', 'Planeswalker', 'Instant', 'Sorcery', 'Artifact', 'Enchantment', 'Battle', 'Land']
@@ -15,23 +16,19 @@ const sum = (entries) => entries.reduce((total, e) => total + e.qty, 0)
 
 export default function DeckView({ deck, looseCount, onAddCards, onMove, onReplace, onDelete }) {
   const [removing, setRemoving] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const active = deck.cards.filter((e) => e.status === 'active')
   const out = deck.cards.filter((e) => e.status === 'out')
   const groups = {}
   for (const entry of active) (groups[mainType(entry)] ??= []).push(entry)
 
-  function handleDelete() {
-    if (!confirm(`Delete "${deck.name}"?`)) return
-    onDelete(confirm('Keep its cards in your collection as loose cards?\n\nOK = keep them, Cancel = remove them too'))
-  }
-
   return (
     <section className="panel deck-view">
       <header>
         <h2>{deck.name}</h2>
         <span className="muted">{sum(active)} cards</span>
-        <button className="danger" onClick={handleDelete}>Delete deck</button>
+        <button className="danger" onClick={() => setDeleting(true)}>Delete deck</button>
       </header>
 
       <AddCardForm onAdd={onAddCards} looseCount={looseCount} buttonLabel="Add to deck" />
@@ -70,6 +67,10 @@ export default function DeckView({ deck, looseCount, onAddCards, onMove, onRepla
             ))}
           </ul>
         </div>
+      )}
+
+      {deleting && (
+        <DeleteDeckDialog deck={deck} onCancel={() => setDeleting(false)} onConfirm={onDelete} />
       )}
 
       {removing && (

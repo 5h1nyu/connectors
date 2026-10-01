@@ -92,3 +92,13 @@ export function newDeck(name, cards) {
     cards: cards.map((c) => ({ ...c, status: 'active' })),
   }
 }
+
+// Swap in fresh card info (prices, images, text) for every card you own. found: { 'sol ring': card }
+export function refreshCards(state, found) {
+  const update = (e) => ({ ...e, card: found[key(e.name)] ?? e.card })
+  return {
+    ...state,
+    decks: state.decks.map((d) => ({ ...d, cards: d.cards.map(update) })),
+    loose: state.loose.map(update),
+  }
+}

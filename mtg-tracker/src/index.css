@@ -1,25 +1,30 @@
+/* Boros colours: Plains white + Mountain red, with a gold trim. */
 :root {
-  --bg: #f6f5f2;
-  --panel: #ffffff;
-  --text: #1d1d1f;
-  --muted: #6b6b70;
-  --border: #dcdad5;
-  --accent: #7a4fd6;
-  --accent-soft: #efe9fb;
-  --danger: #c0392b;
+  --bg: #f7f1e6;
+  --panel: #fffdf8;
+  --text: #2a1d17;
+  --muted: #7a685c;
+  --border: #e6d9c4;
+  --accent: #b3261e;      /* Boros red */
+  --on-accent: #ffffff;   /* text on red buttons */
+  --accent-soft: #f8e3dc;
+  --gold: #b8862b;
+  --danger: #9b1c1c;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #17171a;
-    --panel: #212126;
-    --text: #ececef;
-    --muted: #9a9aa3;
-    --border: #34343b;
-    --accent: #a78bfa;
-    --accent-soft: #2e2740;
-    --danger: #ef6b5b;
+    --bg: #1b1412;
+    --panel: #261c19;
+    --text: #f3e9dc;
+    --muted: #b09d8f;
+    --border: #3d2e28;
+    --accent: #ef6a55;
+    --on-accent: #1b1412;
+    --accent-soft: #3c211c;
+    --gold: #e0b254;
+    --danger: #ff8a7a;
   }
 }
 
@@ -35,10 +40,13 @@ a { color: var(--accent); }
 .small { font-size: 0.85rem; }
 
 .app-header {
-  padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+  padding: 12px 16px; border-bottom: 3px solid var(--gold); background: var(--panel);
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
 }
-.app-header h1 { margin: 0; }
+.app-header h1 { margin: 0; color: var(--accent); letter-spacing: 0.01em; }
+.logo { color: var(--gold); }
+.sync-badge { margin-left: auto; font-size: 0.8rem; color: var(--muted); }
+.sync-badge.error { color: var(--danger); }
 main { padding: 16px; max-width: 1200px; margin: 0 auto; }
 main.with-sidebar { display: grid; grid-template-columns: 240px 1fr; gap: 16px; align-items: start; }
 @media (max-width: 700px) { main.with-sidebar { grid-template-columns: 1fr; } }
@@ -50,7 +58,7 @@ main.with-sidebar { display: grid; grid-template-columns: 240px 1fr; gap: 16px; 
 
 button {
   font: inherit; cursor: pointer; border-radius: 6px; padding: 8px 12px;
-  border: 1px solid var(--accent); background: var(--accent); color: white;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent);
 }
 button:disabled { opacity: 0.6; cursor: wait; }
 button.secondary { background: transparent; color: var(--accent); }
@@ -111,7 +119,7 @@ li { padding: 2px 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: 
   font-size: 0.8rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border);
   background: transparent; color: var(--text);
 }
-.tag.loose { border-color: var(--accent); color: var(--accent); }
+.tag.loose { border-color: var(--gold); color: var(--gold); }
 .tag.out { border-style: dashed; color: var(--muted); }
 
 .filters { margin: 16px 0 8px; }
@@ -152,3 +160,19 @@ li { padding: 2px 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: 
   display: grid; place-items: center; padding: 16px;
 }
 .preview.pinned { position: static; pointer-events: auto; max-height: 90vh; overflow-y: auto; }
+
+.dialog .choice {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  background: transparent; color: var(--text); border: 1px solid var(--border); padding: 12px;
+}
+.dialog .choice:hover { border-color: var(--accent); }
+.dialog .choice small { color: var(--muted); }
+.dialog .danger-choice strong { color: var(--danger); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 40;
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px;
+  display: flex; gap: 16px; align-items: center; max-width: calc(100% - 32px);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+}
+.toast button.link { color: var(--gold); font-weight: 600; }

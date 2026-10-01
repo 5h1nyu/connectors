@@ -26,8 +26,8 @@ export default function Backup({ state, onRestore }) {
     <section className="panel stack">
       <h2>Backup</h2>
       <p className="muted">
-        Your decks are saved in this browser only. Download a backup now and then, and use it to copy
-        your collection to another device.
+        Download a copy of your whole collection as a file, just in case. You can load it back here
+        any time.
       </p>
       <button onClick={exportFile}>Download backup</button>
       <label className="file-label">
