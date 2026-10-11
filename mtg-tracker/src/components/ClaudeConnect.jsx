@@ -8,8 +8,28 @@ async function sha256(text) {
 }
 
 // Make (or turn off) your private link that lets Claude read and edit your vault.
+const SLUG_KEY = 'mtg-tracker:claude-function'
+const readSlug = () => {
+  try {
+    return localStorage.getItem(SLUG_KEY) || 'vault-mcp'
+  } catch {
+    return 'vault-mcp'
+  }
+}
+
 export default function ClaudeConnect({ user, notify }) {
   const [status, setStatus] = useState('loading') // 'loading' | 'off' | 'on' | 'not-set-up'
+  // The function's web address name in Supabase (shown after /functions/v1/ on its page)
+  const [slug, setSlug] = useState(readSlug)
+  const saveSlug = (value) => {
+    const clean = value.trim().replace(/^.*\/functions\/v1\//, '').replace(/\/.*$/, '')
+    setSlug(clean)
+    try {
+      localStorage.setItem(SLUG_KEY, clean)
+    } catch {
+      // ignore
+    }
+  }
   const [link, setLink] = useState(null) // only shown right after making it
   const [copied, setCopied] = useState(false)
 
@@ -29,7 +49,7 @@ export default function ClaudeConnect({ user, notify }) {
       .from('claude_keys')
       .upsert({ user_id: user.id, key_hash: await sha256(key), created_at: new Date().toISOString() })
     if (error) return setStatus('not-set-up')
-    setLink(`${SUPABASE_URL}/functions/v1/vault-mcp/${key}`)
+    setLink(`${SUPABASE_URL}/functions/v1/${slug || 'vault-mcp'}/${key}`)
     setStatus('on')
     setCopied(false)
   }
@@ -50,6 +70,14 @@ export default function ClaudeConnect({ user, notify }) {
         Yennett deck?", "make me a brew and tell me what to buy". Changes show up here within about 20 seconds.
       </p>
 
+      <label className="slug-field">
+        Function address in Supabase
+        <span className="row">
+          <span className="muted small">…/functions/v1/</span>
+          <input value={slug} onChange={(e) => saveSlug(e.target.value)} placeholder="vault-mcp" />
+        </span>
+        <small className="muted">The name after <code>/functions/v1/</code> on the function's page in Supabase (e.g. clever-responder).</small>
+      </label>
       {status === 'loading' && <p className="muted"><span className="spinner" /> Checking…</p>}
       {status === 'not-set-up' && (
         <div className="notice info">

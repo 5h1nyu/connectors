@@ -9,7 +9,20 @@
 
 const env = (k: string) => (globalThis as any).Deno?.env.get(k) ?? (globalThis as any).process?.env[k]
 const SUPABASE_URL = env('SUPABASE_URL')
-const SERVICE_KEY = env('SUPABASE_SERVICE_ROLE_KEY') || env('SUPABASE_SECRET_KEY')
+
+// The server-side key Supabase gives every function. Newer projects provide SUPABASE_SECRET_KEYS (a JSON list);
+// older ones SUPABASE_SERVICE_ROLE_KEY. Use whichever exists.
+function serverKey() {
+  try {
+    const keys = JSON.parse(env('SUPABASE_SECRET_KEYS') ?? '{}')
+    const first = keys.default ?? Object.values(keys)[0]
+    if (first) return String(first)
+  } catch {
+    // not set or not JSON: fall through
+  }
+  return env('SUPABASE_SERVICE_ROLE_KEY') || env('SUPABASE_SECRET_KEY') || ''
+}
+const SERVICE_KEY = serverKey()
 
 // ---------- Database (Supabase REST, using the server-side key) ----------
 async function db(path: string, init: any = {}) {
@@ -409,7 +422,14 @@ export async function handler(req: Request) {
   // The secret key is the last part of the link: …/functions/v1/vault-mcp/<key>  (or ?key=<key>)
   const url = new URL(req.url)
   const secret = url.searchParams.get('key') || url.pathname.split('/').filter(Boolean).pop() || ''
-  const userId = await userForKey(secret).catch(() => null)
+  if (!SUPABASE_URL || !SERVICE_KEY) return json({ error: 'Setup problem: this function has no Supabase server key. Redeploy it from the Supabase dashboard.' }, 500)
+  let userId
+  try {
+    userId = await userForKey(secret)
+  } catch (err: any) {
+    // Say exactly what went wrong (e.g. claude-connector.sql not run yet) instead of blaming the link.
+    return json({ error: `Setup problem: ${err?.message ?? err}. Did you run supabase/claude-connector.sql?` }, 500)
+  }
   if (!userId) return json({ error: 'This connector link is not valid. Make a new one on your Profile page in Shinyu\'s Vault.' }, 401)
   if (req.method !== 'POST') return json({ error: 'Use POST (this is an MCP server for Claude).' }, 405)
 
