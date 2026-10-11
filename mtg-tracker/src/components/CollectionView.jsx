@@ -4,25 +4,37 @@ import { CardName } from './CardPreview'
 import CardImage from './CardImage'
 import AddCardForm from './AddCardForm'
 import Places from './Places'
-import ViewToggle from './ViewToggle'
 import SelectionBar, { MoveToSelect } from './SelectionBar'
 import ConfirmRemoveDialog from './ConfirmRemoveDialog'
 import { useViewMode } from '../lib/useViewMode'
 import { copyKey } from '../lib/collection'
+import CollectionFilters from './CollectionFilters'
+import { EMPTY_FILTERS, copyMatches, itemMatches, sortItems } from '../lib/collectionFilters'
 
 const money = (n) => `$${n.toFixed(2)}`
 
 export default function CollectionView({ collection, decks, onAddLoose, onMoveMany, onRemoveMany, onOpenDeck }) {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  const [sort, setSort] = useViewMode('collection-sort', 'name')
   const [view, setView] = useViewMode('collection')
   const [selected, setSelected] = useState(() => new Set())
   const [confirming, setConfirming] = useState(false)
   const [adding, setAdding] = useState(false)
 
-  const items = useMemo(() => [...collection.values()].sort((a, b) => a.name.localeCompare(b.name)), [collection])
-  const matches = (c) => filter === 'all' || (filter === 'loose' && c.loc.type === 'loose') || (filter === 'out' && c.loc.status === 'out')
-  const shown = items.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()) && item.copies.some(matches))
+  const items = useMemo(() => [...collection.values()], [collection])
+  const matches = (c) => copyMatches(c, filters)
+  const shownCopies = (item) => item.copies.filter(matches)
+  const shown = sortItems(
+    items.filter((item) => itemMatches(item, filters) && item.copies.some(matches)),
+    sort,
+    shownCopies,
+  )
+  // Every set in your collection, for the Set filter
+  const sets = useMemo(() => {
+    const all = new Map()
+    for (const item of collection.values()) for (const c of item.copies) if (c.entry.card?.set) all.set(c.entry.card.set, c.entry.card.setName ?? c.entry.card.set)
+    return [...all].sort((a, b) => a[1].localeCompare(b[1]))
+  }, [collection])
   const allCopies = items.flatMap((i) => i.copies)
   const picked = allCopies.filter((c) => selected.has(copyKey(c)))
 
@@ -56,15 +68,18 @@ export default function CollectionView({ collection, decks, onAddLoose, onMoveMa
         </div>
       )}
 
-      <div className="search-row">
-        <input className="big-search" type="search" placeholder="Search your cards" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <ViewToggle mode={view} onChange={setView} />
-      </div>
-      <div className="row chips" role="group" aria-label="Show">
-        {[['all', 'All'], ['loose', 'Loose'], ['out', 'Swapped out']].map(([id, label]) => (
-          <button key={id} className={`chip ${filter === id ? 'active' : ''}`} onClick={() => setFilter(id)}>{label}</button>
-        ))}
-      </div>
+      <CollectionFilters
+        filters={filters}
+        setFilters={setFilters}
+        sort={sort}
+        setSort={setSort}
+        view={view}
+        setView={setView}
+        decks={decks}
+        sets={sets}
+        shownCount={shown.length}
+        totalCount={items.length}
+      />
       <label className="row small select-all">
         <input type="checkbox" checked={allShownSelected} onChange={(e) => setMany(shownKeys, e.target.checked)} />
         Select all {shown.length} shown

@@ -668,3 +668,19 @@ button:active { transform: scale(0.97); }
 .claude-connect h2 { margin: 0; }
 .secret-link { display: block; margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--surface); word-break: break-all; font-size: 0.82rem; }
 .slug-field input { flex: 1; min-width: 160px; }
+
+/* Collection filters */
+.filters-block { margin-bottom: 8px; }
+.filter-row { gap: 10px; margin-bottom: 10px; }
+.inline-select { flex-direction: row; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; }
+.inline-select select { padding: 8px 10px; }
+.filters-on { border-color: var(--accent); color: var(--accent); }
+.showing { margin-left: auto; }
+.filter-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px 20px; margin-bottom: 14px; padding: 18px 20px; }
+.filter-group { display: flex; flex-direction: column; gap: 8px; color: var(--text); }
+.filter-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.colour-toggle { padding: 4px; background: transparent; border: 2px solid transparent; border-radius: 50%; line-height: 0; opacity: 0.55; }
+.colour-toggle.active { border-color: var(--accent); opacity: 1; }
+.colour-toggle:hover { opacity: 1; filter: none; }
+.pip-C { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #b9b5ae; color: #333; font-size: 0.85rem; }
+.price-range input { width: 80px; }

@@ -145,6 +145,8 @@ old one working instantly.
 | `src/components/AddDeckForm.jsx` | Pick a precon or paste a list |
 | `src/components/AddCardForm.jsx` | Add one card (with autocomplete) or paste several |
 | `src/components/CollectionView.jsx` | Every card you own and where it is |
+| `src/components/CollectionFilters.jsx` | Collection search, Where, Sort and the colour/type/set/rarity/price filters |
+| `src/lib/collectionFilters.js` | The filtering and sorting rules for the collection |
 | `src/components/Backup.jsx` | Download / restore your data as a file |
 | `src/components/Account.jsx` | Log in / create account for sync |
 | `src/components/CardData.jsx` | Refresh prices & card info from Scryfall |
