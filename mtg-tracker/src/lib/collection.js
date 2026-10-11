@@ -273,3 +273,10 @@ export function setFront(state, deckId, name, { commander } = {}) {
     ),
   }
 }
+
+// Can this card lead a Commander deck? Legendary creatures, plus cards that say they can.
+export function canBeCommander(card) {
+  if (!card) return false
+  const type = card.typeLine ?? ''
+  return (/Legendary/.test(type) && /Creature/.test(type)) || /can be your commander/i.test(card.oracleText ?? '')
+}

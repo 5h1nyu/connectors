@@ -122,7 +122,7 @@ export default function App() {
     setFront: (deckId, name, opts) => {
       setState((s) => col.setFront(s, deckId, name, opts))
       const deck = state.decks.find((d) => d.id === deckId)
-      setToast({ message: `✓ ${name} is now the front card of ${deck?.name ?? 'the deck'}.` })
+      setToast({ message: `✓ ${name} is now the ${opts?.commander ? 'commander' : 'front card'} of ${deck?.name ?? 'the deck'}.` })
     },
     notify: (message) => setToast({ message }),
     adjust: (entry, loc, delta) => {

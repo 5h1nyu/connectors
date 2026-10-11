@@ -107,6 +107,29 @@ If you ran an older copy of it before, also run `supabase/usernames-v2.sql` (let
 It creates the profiles and friendships tables, the sharing rules, and storage for profile photos. Sharing
 only shows what you've synced, so stay logged in.
 
+## Connect Claude
+
+Two ways to use Claude with your vault:
+
+- **Ask Claude** (no setup): the button on any deck opens a new Claude chat with that decklist filled in.
+  Paste Claude's suggested list back with "Paste a list instead".
+- **The connector** (live): Claude gets tools to read and edit your vault from any chat: list decks, check
+  what you own, add/remove cards, create brews, set commanders, export lists. Changes appear in the app
+  within ~20 seconds. It runs in your own Supabase (free) and uses your normal Claude plan.
+
+One-time setup for the connector:
+1. Supabase → **SQL Editor** → run `supabase/claude-connector.sql`.
+2. Supabase → **Edge Functions** → **Deploy a new function** → **Via Editor**. Name it `vault-mcp`, replace the
+   example code with everything in `supabase/functions/vault-mcp/index.ts`, and click **Deploy**.
+3. Open the `vault-mcp` function's **Details/Settings** and turn **off** "Verify JWT" (Claude can't send a
+   Supabase login; the private link is the password instead). Save.
+4. In the app: your picture → **Your profile** → **Connect Claude** → **Make my Claude link** → **Copy link**.
+5. Claude → **Settings → Connectors → Add custom connector** → name it *Shinyu's Vault*, paste the link → **Add**.
+   Turn it on in a chat and ask, e.g. "what decks do I have?".
+
+The link is like a password: only a fingerprint of it is stored. "Turn off" (or making a new link) stops the
+old one working instantly.
+
 ## How the code is organised
 
 | File | What it does |
@@ -157,6 +180,9 @@ only shows what you've synced, so stay logged in.
 | `src/components/AvatarPicker.jsx` | Profile picture from card art or an uploaded photo |
 | `src/components/VisibilityPicker.jsx` | Private / Friends / Public switch |
 | `supabase/social.sql` | Database setup for friends and sharing (run once) |
+| `supabase/claude-connector.sql` | Table for private Claude connector links (run once) |
+| `supabase/functions/vault-mcp/index.ts` | The Claude connector (MCP server) as a Supabase Edge Function |
+| `src/components/ClaudeConnect.jsx` | Profile → Connect Claude: make or turn off your private link |
 | `supabase/usernames-v2.sql` | Update for older setups: any characters in usernames |
 | `src/lib/useTilt.js` | Makes cards and deck stacks lean towards the mouse (3D) with a moving shine |
 | `src/components/RingInscription.jsx` | Circles of glowing Tengwar (logo, background, card backs) |

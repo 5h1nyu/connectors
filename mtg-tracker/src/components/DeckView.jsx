@@ -11,7 +11,7 @@ import ConfirmRemoveDialog from './ConfirmRemoveDialog'
 import ViewToggle from './ViewToggle'
 import PageHeader from './PageHeader'
 import { useViewMode } from '../lib/useViewMode'
-import { availability, colorsOf, copyKey, coverOf, deckSize, key } from '../lib/collection'
+import { availability, colorsOf, copyKey, coverOf, deckSize, exportDeck, key } from '../lib/collection'
 import PrintingPicker from './PrintingPicker'
 import VisibilityPicker from './VisibilityPicker'
 import FrontCardDialog from './FrontCardDialog'
@@ -26,6 +26,18 @@ function mainType(entry) {
 
 const sum = (entries) => entries.reduce((total, e) => total + e.qty, 0)
 const money = (n) => `$${n.toFixed(2)}`
+
+// Open a new Claude chat with this deck already filled in.
+function askClaude(deck) {
+  const list = exportDeck(deck, false)
+  const prompt =
+    `I'm ${deck.brew ? 'brewing' : 'tuning'} a Magic: The Gathering Commander deck called "${deck.name}". Here's the list:\n\n${list}\n\n` +
+    'Help me improve it: weak cards, missing staples, mana base, and a few budget-friendly upgrades. ' +
+    'Finish with the full updated decklist as plain "1 Card Name" lines so I can paste it back into my tracker.'
+  const url = `https://claude.ai/new?q=${encodeURIComponent(prompt)}`
+  if (url.length < 14000) window.open(url, '_blank', 'noopener')
+  else navigator.clipboard.writeText(prompt).then(() => window.open('https://claude.ai/new', '_blank', 'noopener'))
+}
 
 export default function DeckView({ deck, state, collection, looseCount, actions, canShare, onBack, onDelete }) {
   const [view, setView] = useViewMode('deck')
@@ -84,6 +96,7 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
         actions={
           <>
             <ViewToggle mode={view} onChange={setView} />
+            <button className="secondary" onClick={() => askClaude(deck)} title="Open a Claude chat with this decklist">Ask Claude</button>
             <button className="secondary" onClick={() => setDialog('export')}>Export</button>
             <button className="secondary danger" onClick={() => setDialog('delete')}>Delete</button>
           </>
@@ -92,17 +105,17 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
 
       {cover && coverEntry && (
         <div className="front-card">
-          <button className="front-thumb" onClick={() => setDialog('front')} title="Choose a different front card">
+          <button className="front-thumb" onClick={() => setDialog('front')} title="Choose your commander">
             <img src={cover.imageSmall ?? cover.image} alt="" />
           </button>
           <div className="front-info">
-            <span className="muted small">Front card{deck.commander === coverEntry.name ? ' · Commander' : ''}</span>
+            <span className="muted small">{deck.commander === coverEntry.name ? 'Commander' : 'Front card'}</span>
             <strong>{coverEntry.name}</strong>
             <span className="muted small">{cover.setName ? `${cover.setName} · ${cover.set.toUpperCase()} #${cover.number}` : 'Printing unknown'}</span>
           </div>
           <div className="row front-actions">
             <button className="secondary" onClick={() => setDialog('cover')}>Change printing</button>
-            <button className="secondary" onClick={() => setDialog('front')}>Choose a different card</button>
+            <button className="secondary" onClick={() => setDialog('front')}>{deck.commander ? 'Change commander' : 'Choose commander'}</button>
           </div>
         </div>
       )}

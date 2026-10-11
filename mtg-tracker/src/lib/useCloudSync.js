@@ -95,7 +95,12 @@ export function useCloudSync(state, replaceState) {
     pull()
     const onVisible = () => document.visibilityState === 'visible' && pull()
     document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
+    // Check every 20 seconds while the app is open, so edits made elsewhere (another device, or Claude) show up.
+    const timer = setInterval(() => document.visibilityState === 'visible' && !readMeta().dirty && pull(), 20000)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(timer)
+    }
   }, [user, pull])
 
   // Upload after you change something.

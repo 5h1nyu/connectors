@@ -71,15 +71,27 @@ export default function AddDeckForm({ onAdd, onBack }) {
       )}
       {mode === 'precon' && precons && (
         <>
-          <input placeholder="Search precons, e.g. Atraxa" value={preconSearch} onChange={(e) => setPreconSearch(e.target.value)} />
+          <input placeholder="Search precons and Secret Lair decks, e.g. Odds & Ends" value={preconSearch} onChange={(e) => setPreconSearch(e.target.value)} />
           <ul className="precon-list">
             {shown.map((p) => (
               <li key={p.fileName}>
                 <button className="link" disabled={!!status?.loading} onClick={() => pickPrecon(p)}>{p.name}</button>
-                <span className="muted"> {p.code} · {p.releaseDate.slice(0, 4)}</span>
+                <span className="muted"> {p.type} · {p.code} · {p.releaseDate?.slice(0, 4)}</span>
               </li>
             ))}
           </ul>
+          {preconSearch.trim() && shown.length === 0 && (
+            <div className="notice info">
+              <div>
+                <strong>Can't find “{preconSearch.trim()}”?</strong> Brand-new decks (like recent Secret Lair drops) can take a few
+                weeks to appear in MTGJSON, where this list comes from. Until then: find the deck on{' '}
+                <a href={`https://moxfield.com/search?q=${encodeURIComponent(preconSearch.trim())}`} target="_blank" rel="noreferrer">Moxfield</a>,{' '}
+                <a href={`https://archidekt.com/search/decks?name=${encodeURIComponent(preconSearch.trim())}`} target="_blank" rel="noreferrer">Archidekt</a> or{' '}
+                <a href={`https://edhrec.com/search?q=${encodeURIComponent(preconSearch.trim())}`} target="_blank" rel="noreferrer">EDHREC</a>,
+                copy its list, and use <button className="link" onClick={() => setMode('paste')}>Paste a list</button>.
+              </div>
+            </div>
+          )}
         </>
       )}
 

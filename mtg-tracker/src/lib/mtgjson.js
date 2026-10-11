@@ -3,15 +3,17 @@
 const API = 'https://mtgjson.com/api/v5'
 let preconList = null
 
-// All Commander precons, newest first: [{ name, code, fileName, releaseDate }]
+// Every deck MTGJSON knows (Commander precons, Secret Lair decks, starter decks…), Commander first,
+// then newest first: [{ name, code, fileName, releaseDate, type }]
 export async function fetchPreconList() {
   if (!preconList) {
     const res = await fetch(`${API}/DeckList.json`)
     if (!res.ok) throw new Error(`MTGJSON returned ${res.status}`)
     const { data } = await res.json()
-    preconList = data
-      .filter((d) => d.type === 'Commander Deck')
-      .sort((a, b) => b.releaseDate.localeCompare(a.releaseDate))
+    const commanderish = (d) => /commander|secret lair/i.test(`${d.type} ${d.name}`)
+    preconList = data.sort(
+      (a, b) => commanderish(b) - commanderish(a) || (b.releaseDate ?? '').localeCompare(a.releaseDate ?? ''),
+    )
   }
   return preconList
 }

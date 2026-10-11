@@ -3,6 +3,7 @@ import MoveDialog from './MoveDialog'
 import PrintingPicker from './PrintingPicker'
 import { useTilt } from '../lib/useTilt'
 import ConfirmRemoveDialog from './ConfirmRemoveDialog'
+import { canBeCommander } from '../lib/collection'
 import Portal from './Portal'
 
 const COLOR_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' }
@@ -90,15 +91,15 @@ export default function CardDetail({ card, item, wantedIn = [], decks, actions, 
                   <span className="row copy-actions">
                     <button className="secondary small-btn" onClick={() => setReprinting(copy)}>Printing</button>
                     <button className="secondary small-btn" onClick={() => setMoving(copy)}>Move</button>
-                    {copy.loc.type === 'deck' && copy.loc.status !== 'out' && (() => {
-                      const isFront = decks.find((d) => d.id === copy.loc.deckId)?.cover === copy.entry.name
+                    {copy.loc.type === 'deck' && copy.loc.status !== 'out' && canBeCommander(copy.entry.card) && (() => {
+                      const isFront = decks.find((d) => d.id === copy.loc.deckId)?.commander === copy.entry.name
                       return (
                         <button
                           className={`secondary small-btn front-btn ${isFront ? 'is-front' : ''}`}
-                          title="Show this card on the front of the deck"
-                          onClick={() => actions.setFront(copy.loc.deckId, copy.entry.name)}
+                          title="Make this the deck's commander (it goes on the front of the deck)"
+                          onClick={() => actions.setFront(copy.loc.deckId, copy.entry.name, { commander: true })}
                         >
-                          {isFront ? '✓ Front card' : '★ Make front card'}
+                          {isFront ? '✓ Commander' : '★ Make commander'}
                         </button>
                       )
                     })()}

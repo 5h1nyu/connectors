@@ -4,6 +4,7 @@ import Avatar from './Avatar'
 import AvatarPicker from './AvatarPicker'
 import VisibilityPicker from './VisibilityPicker'
 import Account from './Account'
+import ClaudeConnect from './ClaudeConnect'
 import { profileLink } from '../lib/social'
 import { deckSize } from '../lib/collection'
 
@@ -126,6 +127,8 @@ export default function ProfilePage({ sync, profileState, decks, onDeckVisibilit
         ))}
         <p className="muted small">🔒 Private: only you · 👥 Friends: you and your friends · 🌐 Public: anyone with your profile link</p>
       </div>
+
+      <ClaudeConnect user={user} notify={notify} />
 
       {picking && (
         <AvatarPicker
