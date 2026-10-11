@@ -83,7 +83,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 32px 24px 96px; }
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-name {
-  font-family: var(--brand-font, 'Uncial Antiqua', serif); font-weight: 700; font-size: 1.15rem; letter-spacing: 0.06em;
+  font-family: 'Uncial Antiqua', serif; font-weight: 700; font-size: 1.15rem; letter-spacing: 0.06em;
   text-transform: uppercase; white-space: nowrap; color: var(--text);
 }
 .logo-ring { width: 30px; height: 30px; }
@@ -657,9 +657,6 @@ button:active { transform: scale(0.97); }
 .colour-pick input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 .colour-pick input[type='color']::-moz-color-swatch { border: none; border-radius: 50%; }
 .swap { font-size: 1.1rem; }
-.font-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.font-option { align-items: center; text-align: center; padding: 16px 10px; }
-.font-sample { font-size: 1.15rem; letter-spacing: 0.05em; color: var(--text); white-space: nowrap; }
 
 .sort-label { flex-direction: row; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; }
 
@@ -684,3 +681,31 @@ button:active { transform: scale(0.97); }
 .colour-toggle:hover { opacity: 1; filter: none; }
 .pip-C { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #b9b5ae; color: #333; font-size: 0.85rem; }
 .price-range input { width: 80px; }
+
+.home-link { padding: 0; background: none; border: none; color: inherit; border-radius: 10px; }
+.home-link:hover { filter: none; opacity: 0.85; }
+
+/* Collection: one row per card, printings tucked inside */
+.grouped-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.group { border-bottom: 1px solid var(--line); }
+.group.selected { background: var(--accent-soft); }
+.group-row { display: grid; grid-template-columns: auto auto 2.6em minmax(140px, 1.6fr) minmax(110px, 1fr) minmax(120px, 1.2fr) 8em; gap: 10px; align-items: center; padding: 8px 4px; }
+.expand { padding: 2px 6px; background: none; border: none; color: var(--muted); font-size: 0.9rem; }
+.expand:hover { color: var(--text); filter: none; }
+.group-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.printing-count { justify-self: start; padding: 2px 10px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; font-size: 0.8rem; font-weight: 500; }
+.printing-count:hover { color: var(--text); filter: none; }
+.group-where { min-width: 0; overflow: hidden; }
+.group-price { text-align: right; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.printing-rows { padding: 0 4px 10px 64px; display: flex; flex-direction: column; gap: 4px; }
+.printing-rows li { display: flex; align-items: center; gap: 10px; padding: 4px 8px; border-radius: 8px; flex-wrap: wrap; }
+.printing-rows li.selected { background: var(--accent-soft); }
+.printing-rows img { width: 30px; border-radius: 3px; }
+.printing-name { flex: 1; min-width: 160px; }
+.printings-badge { font-size: 0.72rem; color: var(--muted); margin-top: -2px; }
+.show-more { display: flex; justify-content: center; margin: 20px 0 8px; }
+@media (max-width: 640px) {
+  .group-row { grid-template-columns: auto auto 2em 1fr auto; }
+  .group-where, .group-price { display: none; }
+  .printing-rows { padding-left: 24px; }
+}

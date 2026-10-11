@@ -73,7 +73,6 @@ function varsFor(theme, custom) {
 const KEY = 'mtg-tracker:theme'
 const CUSTOM_KEY = 'mtg-tracker:theme-custom'
 const VARS_KEY = 'mtg-tracker:theme-vars' // read by index.html so the page opens in the right colours
-const FONT_KEY = 'mtg-tracker:brand-font'
 
 export const DEFAULT_CUSTOM = { primary: '#a99bff', accent: '#72b2ff' }
 
@@ -119,39 +118,13 @@ export function useTheme() {
     root.dataset.theme = 'mana'
     root.removeAttribute('style')
     Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v))
-    root.style.setProperty('--brand-font', BRAND_FONTS[readFontId()]?.family ?? BRAND_FONTS.wizard.family)
     try {
       localStorage.setItem(KEY, theme)
     } catch {
       // ignore
     }
     write(CUSTOM_KEY, custom)
-    write(VARS_KEY, { ...vars, '--brand-font': BRAND_FONTS[readFontId()]?.family })
+    write(VARS_KEY, vars)
   }, [theme, custom])
   return { theme, setTheme, custom, setCustom }
-}
-
-// Fonts for the "SHINYU'S VAULT" title.
-export const BRAND_FONTS = {
-  wizard: { name: 'Wizard', family: "'Uncial Antiqua', serif" },
-  regal: { name: 'Regal', family: "'Cinzel Decorative', serif" },
-  blocky: { name: 'Blocky', family: "'Bungee', sans-serif" },
-  fluid: { name: 'Fluid', family: "'Righteous', sans-serif" },
-  clean: { name: 'Clean', family: "'Inter', sans-serif" },
-}
-
-function readFontId() {
-  const id = read(FONT_KEY, 'wizard')
-  return BRAND_FONTS[id] ? id : 'wizard'
-}
-
-export function useBrandFont() {
-  const [font, setFont] = useState(readFontId)
-  useEffect(() => {
-    document.documentElement.style.setProperty('--brand-font', BRAND_FONTS[font].family)
-    write(FONT_KEY, font)
-    const vars = read(VARS_KEY, {})
-    write(VARS_KEY, { ...vars, '--brand-font': BRAND_FONTS[font].family })
-  }, [font])
-  return [font, setFont]
 }

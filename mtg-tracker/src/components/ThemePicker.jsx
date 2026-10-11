@@ -1,7 +1,7 @@
-import { BRAND_FONTS, MANA_THEMES } from '../lib/theme'
+import { MANA_THEMES } from '../lib/theme'
 
-// Settings → Look: your own two colours, a Magic colour pair, and the font for the title.
-export default function ThemePicker({ themeState, font, onFont }) {
+// Settings → Look: your own two colours, or a Magic colour pair.
+export default function ThemePicker({ themeState }) {
   const { theme, setTheme, custom, setCustom } = themeState
   const setColour = (key) => (e) => {
     setCustom({ ...custom, [key]: e.target.value })
@@ -38,15 +38,6 @@ export default function ThemePicker({ themeState, font, onFont }) {
         ))}
       </div>
 
-      <h3>Title font</h3>
-      <div className="font-grid">
-        {Object.entries(BRAND_FONTS).map(([id, f]) => (
-          <button key={id} className={`theme-option font-option ${font === id ? 'active' : ''}`} onClick={() => onFont(id)}>
-            <span className="font-sample" style={{ fontFamily: f.family }}>SHINYU'S VAULT</span>
-            <small className="muted">{f.name}</small>
-          </button>
-        ))}
-      </div>
     </section>
   )
 }

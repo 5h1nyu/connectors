@@ -5,7 +5,7 @@ import { fetchPrecon, fetchPreconList } from '../lib/mtgjson'
 import { newDeck } from '../lib/collection'
 import PageHeader from './PageHeader'
 
-export default function AddDeckForm({ onAdd, onBack }) {
+export default function AddDeckForm({ onAdd }) {
   const [mode, setMode] = useState('precon')
   const [name, setName] = useState('')
   const [list, setList] = useState('')
@@ -59,7 +59,7 @@ export default function AddDeckForm({ onAdd, onBack }) {
 
   return (
     <section className="add-deck">
-      <PageHeader back={{ label: 'Decks', onClick: onBack }} title="Import a deck you own" subtitle="Pick a Commander precon, or paste a list from Moxfield, Archidekt or anywhere." />
+      <PageHeader title="Import a deck you own" subtitle="Pick a Commander precon, or paste a list from Moxfield, Archidekt or anywhere." />
       <div className="panel stack">
       <div className="tabs">
         <button className={mode === 'precon' ? 'active' : ''} onClick={() => setMode('precon')}>Pick a precon</button>

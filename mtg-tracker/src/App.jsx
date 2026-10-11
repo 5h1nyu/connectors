@@ -14,7 +14,7 @@ import Backdrop from './components/Backdrop'
 import ThemePicker from './components/ThemePicker'
 import NavIcon from './components/NavIcon'
 import PageHeader from './components/PageHeader'
-import { useBrandFont, useTheme } from './lib/theme'
+import { useTheme } from './lib/theme'
 import FriendsView from './components/FriendsView'
 import VaultView from './components/VaultView'
 import HeaderMenu from './components/HeaderMenu'
@@ -22,6 +22,7 @@ import ProfilePage from './components/ProfilePage'
 import { useProfile } from './lib/useProfile'
 import { getProfileByUsername } from './lib/social'
 import { supabase } from './lib/supabase'
+import { NavContext, useRoute } from './lib/route'
 import { CardPreviewProvider } from './components/CardPreview'
 import { loadState, saveState } from './lib/storage'
 import { lookupEntries } from './lib/scryfall'
@@ -35,42 +36,30 @@ const TABS = [
   ['me', 'You'], // phones only: the bottom bar's way to your profile (desktop uses the picture menu)
 ]
 
-// "#/u/shinyu" in the address bar means "show shinyu's public profile".
-function readProfileHash() {
-  const match = window.location.hash.match(/^#\/u\/([^/?#]+)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
-
 export default function App() {
   const [state, setState] = useState(loadState)
-  const [tab, setTab] = useState('decks')
-  const [deckScreen, setDeckScreen] = useState('shelf') // 'shelf' | 'import' | a deck id
+  const { route, go, back, canGoBack } = useRoute()
+  const tab = route.tab === 'public' ? 'decks' : route.tab
+  const deckScreen = route.deck ?? 'shelf' // 'shelf' | 'import' | a deck id
+  const publicName = route.tab === 'public' ? route.user : null
+  const setTab = (t) => go(t === 'decks' ? '#/decks' : `#/${t}`)
+  const setDeckScreen = (screen, opts) =>
+    go(screen === 'shelf' ? '#/decks' : screen === 'import' ? '#/decks/import' : `#/deck/${encodeURIComponent(screen)}`, opts)
   const [creating, setCreating] = useState(false) // the "Build a new deck" dialog
   const [detailCard, setDetailCard] = useState(null) // card shown on the full card page
   const [toast, setToast] = useState(null) // { message, undo }
   const sync = useCloudSync(state, setState)
   const themeState = useTheme()
-  const [brandFont, setBrandFont] = useBrandFont()
   const profileState = useProfile(sync.user)
-  const [publicName, setPublicName] = useState(readProfileHash) // viewing someone's link: #/u/username
   const [publicProfile, setPublicProfile] = useState(null)
-
-  useEffect(() => {
-    const onHash = () => setPublicName(readProfileHash())
-    window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
-  }, [])
   useEffect(() => {
     if (!publicName || !supabase) return
     getProfileByUsername(publicName)
-      .then((p) => setPublicProfile(p ?? { missing: true }))
-      .catch(() => setPublicProfile({ missing: true }))
+      .then((p) => setPublicProfile(p ?? { missing: true, username: publicName }))
+      .catch(() => setPublicProfile({ missing: true, username: publicName }))
   }, [publicName])
-  const leavePublic = () => {
-    history.replaceState(null, '', window.location.pathname)
-    setPublicName(null)
-    setPublicProfile(null)
-  }
+  const shownPublic = publicProfile?.username?.toLowerCase() === publicName?.toLowerCase() ? publicProfile : null
+  const leavePublic = () => go('#/decks')
 
   // Save to the browser whenever anything changes.
   useEffect(() => saveState(state), [state])
@@ -148,13 +137,16 @@ export default function App() {
   }
 
   return (
+    <NavContext.Provider value={{ canGoBack, back }}>
     <CardPreviewProvider onOpenCard={setDetailCard}>
       <Backdrop />
       <header className="app-header">
-        <Logo />
+        <button className="home-link" onClick={() => setTab('decks')} title="Home">
+          <Logo />
+        </button>
         <nav className="main-nav">
           {TABS.map(([id, label]) => (
-            <button key={id} className={`${tab === id || (id === 'me' && tab === 'settings') ? 'active' : ''} nav-${id}`} onClick={() => { if (publicName) leavePublic(); setTab(id); if (id === 'decks') setDeckScreen('shelf') }}>
+            <button key={id} className={`${tab === id || (id === 'me' && tab === 'settings') ? 'active' : ''} nav-${id}`} onClick={() => setTab(id)}>
               <NavIcon name={id} />
               <span>{label}</span>
             </button>
@@ -169,19 +161,16 @@ export default function App() {
           user={sync.user}
           profile={profileState.profile}
           onSignOut={() => sync.auth.signOut()}
-          onNavigate={(t) => {
-            if (publicName) leavePublic()
-            setTab(t)
-          }}
+          onNavigate={setTab}
         />
       </header>
 
       {publicName ? (
         <main key="public" className="page">
-          {!publicProfile && <p className="muted"><span className="spinner" /> Finding @{publicName}…</p>}
-          {publicProfile?.missing && <p className="muted">There's no one called @{publicName} here.</p>}
-          {publicProfile && !publicProfile.missing && (
-            <VaultView profile={publicProfile} onBack={leavePublic} backLabel="Back to my vault" />
+          {!shownPublic && <p className="muted"><span className="spinner" /> Finding @{publicName}…</p>}
+          {shownPublic?.missing && <p className="muted">There's no one called @{publicName} here.</p>}
+          {shownPublic && !shownPublic.missing && (
+            <VaultView profile={shownPublic} onBack={leavePublic} backLabel="Back to my vault" />
           )}
         </main>
       ) : (
@@ -216,10 +205,9 @@ export default function App() {
         )}
         {tab === 'decks' && deckScreen === 'import' && (
           <AddDeckForm
-            onBack={() => setDeckScreen('shelf')}
             onAdd={(deck) => {
               setState((s) => ({ ...s, decks: [...s.decks, deck] }))
-              setDeckScreen(deck.id)
+              setDeckScreen(deck.id, { replace: true })
             }}
           />
         )}
@@ -232,11 +220,10 @@ export default function App() {
             looseCount={looseCount}
             actions={actions}
             canShare={!!sync.user}
-            onBack={() => setDeckScreen('shelf')}
             onDelete={(keepCards) => {
               const undo = snapshotUndo()
               setState((s) => col.deleteDeck(s, selected.id, keepCards))
-              setDeckScreen('shelf')
+              setDeckScreen('shelf', { replace: true })
               setToast({
                 message: `Deleted ${selected.name}${keepCards ? ', cards moved to loose' : ''}.`,
                 undo: () => {
@@ -276,20 +263,17 @@ export default function App() {
               setToast({ message: '✓ Deck sharing updated.' })
             }}
             onOpenSettings={() => setTab('settings')}
-            onPreview={() => {
-              window.location.hash = `#/u/${encodeURIComponent(profileState.profile.username)}`
-            }}
+            onPreview={() => go(`#/u/${encodeURIComponent(profileState.profile.username)}`)}
             notify={(message) => setToast({ message })}
           />
         )}
         {tab === 'settings' && (
           <div className="stack settings">
             <PageHeader
-              back={{ label: 'Your profile', onClick: () => setTab('me') }}
               title="Settings"
               subtitle="Looks, sync and your data."
             />
-            <ThemePicker themeState={themeState} font={brandFont} onFont={setBrandFont} />
+            <ThemePicker themeState={themeState} />
             <Account sync={sync} />
             <CardData state={state} onRefresh={(byId) => setState((s) => col.refreshCards(s, byId))} />
             <Backup state={state} onRestore={setState} />
@@ -312,5 +296,6 @@ export default function App() {
       )}
       {toast && <Toast message={toast.message} onUndo={toast.undo} onClose={closeToast} />}
     </CardPreviewProvider>
+    </NavContext.Provider>
   )
 }

@@ -39,7 +39,7 @@ function askClaude(deck) {
   else navigator.clipboard.writeText(prompt).then(() => window.open('https://claude.ai/new', '_blank', 'noopener'))
 }
 
-export default function DeckView({ deck, state, collection, looseCount, actions, canShare, onBack, onDelete }) {
+export default function DeckView({ deck, state, collection, looseCount, actions, canShare, onDelete }) {
   const [view, setView] = useViewMode('deck')
   const [moving, setMoving] = useState(null)
   const [dialog, setDialog] = useState(null) // 'delete' | 'export' | 'build' | 'remove' | 'cover'
@@ -82,7 +82,6 @@ export default function DeckView({ deck, state, collection, looseCount, actions,
   return (
     <section className="deck-view">
       <PageHeader
-        back={{ label: 'Decks', onClick: onBack }}
         title={<>{deck.name} {deck.brew && <span className="brew-badge inline">Brewing</span>}</>}
         subtitle={
           <span className="deck-meta">
